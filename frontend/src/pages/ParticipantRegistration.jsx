@@ -255,14 +255,14 @@ function TerminalInput({ prefix, placeholder, value, onChange }) {
 /* ── Panel header ── */
 function PanelHeader({ label, ready }) {
   return (
-    <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border-dark bg-surface-dark/50">
+    <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-4 border-b border-border-dark bg-surface-dark/50">
       <div className="flex items-center gap-2 sm:gap-3">
-        <div className="flex gap-1.5">
-          <span className="size-2.5 rounded-full bg-slate-600/80" />
-          <span className="size-2.5 rounded-full bg-slate-600/80" />
-          <span className="size-2.5 rounded-full bg-slate-600/80" />
+        <div className="flex gap-1 sm:gap-1.5">
+          <span className="size-2 sm:size-2.5 rounded-full bg-slate-600/80" />
+          <span className="size-2 sm:size-2.5 rounded-full bg-slate-600/80" />
+          <span className="size-2 sm:size-2.5 rounded-full bg-slate-600/80" />
         </div>
-        <span className="font-mono text-xs text-slate-400 tracking-widest select-none font-semibold">
+        <span className="font-mono text-[10px] sm:text-xs text-slate-400 tracking-widest select-none font-semibold">
           // {label}
         </span>
       </div>
@@ -272,7 +272,7 @@ function PanelHeader({ label, ready }) {
             initial={{ opacity: 0, x: 6 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 6 }}
-            className="font-mono text-xs text-green-500 tracking-widest font-bold"
+            className="font-mono text-[10px] sm:text-xs text-green-500 tracking-widest font-bold"
           >
             ✓ READY
           </motion.span>
@@ -286,7 +286,7 @@ function PanelHeader({ label, ready }) {
 function MonoField({ label, required, children }) {
   return (
     <div className="space-y-2">
-      <label className="font-mono text-xs text-slate-400 tracking-widest uppercase block font-semibold">
+      <label className="font-mono text-[10px] sm:text-xs text-slate-400 tracking-widest uppercase block font-semibold">
         {label}
         {required && <span className="text-primary ml-1.5">*</span>}
       </label>
@@ -402,7 +402,7 @@ export default function ParticipantRegistration() {
     return (
       <div className="min-h-screen bg-background-dark font-display text-slate-100 flex flex-col">
         <Header navigate={navigate} />
-        <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -412,17 +412,19 @@ export default function ParticipantRegistration() {
             <motion.div
               animate={{ rotate: [0, -10, 10, -5, 5, 0] }}
               transition={{ delay: 0.5, duration: 0.6 }}
-              className="text-7xl mb-6"
+              className="text-5xl sm:text-7xl mb-4 sm:mb-6"
             >
               🦞
             </motion.div>
-            <h2 className="text-3xl font-black mb-2">报名成功！</h2>
+            <h2 className="text-2xl sm:text-3xl font-black mb-2">报名成功！</h2>
             {track && (
-              <p className={`text-sm font-bold mb-3 ${track.color}`}>
+              <p
+                className={`text-xs sm:text-sm font-bold mb-2 sm:mb-3 ${track.color}`}
+              >
                 {track.emoji} {track.title} · {track.subtitle}
               </p>
             )}
-            <p className="text-slate-400 mb-8 leading-relaxed text-sm">
+            <p className="text-slate-400 mb-6 sm:mb-8 leading-relaxed text-xs sm:text-sm px-4">
               你的参赛资料已提交成功。组委会将在审核通过后通过邮件通知你。
               <br />
               线下颁奖典礼：
@@ -430,7 +432,7 @@ export default function ParticipantRegistration() {
             </p>
             <button
               onClick={() => navigate("/")}
-              className="w-full sm:w-auto px-8 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/80 transition-colors text-sm"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/80 transition-colors text-xs sm:text-sm"
             >
               返回首页
             </button>
@@ -441,35 +443,35 @@ export default function ParticipantRegistration() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col bg-background-dark text-slate-100 font-display">
+    <div className="relative flex min-h-screen w-full flex-col bg-background-dark text-slate-100 font-display overflow-x-hidden">
       <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
       <Header navigate={navigate} />
       <MobileStepBar currentStep={currentStep} />
 
-      <main className="flex-1 flex flex-col items-center px-3 sm:px-6 pb-12 sm:pb-16">
+      <main className="flex-1 flex flex-col items-center px-4 sm:px-6 lg:px-8 pb-8 sm:pb-16">
         {/* Hero Banner */}
-        <section className="w-full max-w-7xl pt-3 sm:pt-10">
+        <section className="w-full max-w-7xl pt-4 sm:pt-10">
           <motion.div
             initial={{ opacity: 0, scale: 1.02 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7 }}
-            className="relative w-full h-40 sm:h-56 md:h-72 rounded-xl sm:rounded-2xl overflow-hidden group"
+            className="relative w-full h-44 sm:h-56 md:h-72 rounded-2xl overflow-hidden group"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-background-dark/60 to-background-dark z-10" />
             <div className="absolute inset-0 bg-[url('/banner2.png')] bg-cover bg-center group-hover:scale-105 transition-transform duration-700" />
-            <div className="absolute bottom-0 left-0 p-4 sm:p-8 z-20">
-              <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                <span className="bg-primary text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md">
+            <div className="absolute bottom-0 left-0 p-5 sm:p-8 z-20">
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                <span className="bg-primary text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md">
                   正在报名
                 </span>
-                <span className="text-[11px] sm:text-xs text-slate-300 font-medium tracking-wide">
+                <span className="text-xs text-slate-300 font-medium tracking-wide">
                   · 截止 3月19日
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight mb-1">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-1">
                 加入 <span className="text-primary italic">龙虾军团</span>
               </h1>
-              <p className="text-slate-300 max-w-lg text-[11px] sm:text-base font-light hidden sm:block">
+              <p className="text-slate-300 max-w-lg text-xs sm:text-base font-light hidden sm:block">
                 北纬·龙虾大赛（第一届）· ¥53万现金 + 千亿 GLM-5 Token 奖池
               </p>
             </div>
@@ -477,7 +479,7 @@ export default function ParticipantRegistration() {
         </section>
 
         {/* Form area */}
-        <section className="w-full max-w-7xl mt-4 sm:mt-10 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-10">
+        <section className="w-full max-w-7xl mt-6 sm:mt-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10">
           {/* Desktop sidebar */}
           <aside className="hidden lg:block lg:col-span-3">
             <div className="sticky top-[76px] flex flex-col gap-0">
@@ -604,14 +606,14 @@ export default function ParticipantRegistration() {
           </aside>
 
           {/* Form */}
-          <div className="lg:col-span-9 space-y-3 sm:space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-6">
+          <div className="lg:col-span-9 space-y-4 sm:space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* ── Step 1: Personal Info ── */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden"
+                className="glass-panel rounded-2xl overflow-hidden"
               >
                 <PanelHeader
                   label="01_PERSONAL.INFO"
@@ -623,10 +625,10 @@ export default function ParticipantRegistration() {
                     )
                   }
                 />
-                <div className="p-3 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-x-6 sm:gap-x-12 gap-y-4 sm:gap-y-8">
+                <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-x-8 sm:gap-x-12 gap-y-6 sm:gap-y-8">
                   <MonoField label="name" required>
                     <input
-                      className="mono-input text-sm sm:text-base"
+                      className="mono-input"
                       placeholder="真实姓名"
                       type="text"
                       value={formData.fullName}
@@ -636,7 +638,7 @@ export default function ParticipantRegistration() {
                   </MonoField>
                   <MonoField label="email" required>
                     <input
-                      className="mono-input text-sm sm:text-base"
+                      className="mono-input"
                       placeholder="用于接收赛事通知"
                       type="email"
                       value={formData.email}
@@ -646,7 +648,7 @@ export default function ParticipantRegistration() {
                   </MonoField>
                   <MonoField label="organization" required>
                     <input
-                      className="mono-input text-sm sm:text-base"
+                      className="mono-input"
                       placeholder="公司、大学或研究所"
                       type="text"
                       value={formData.organization}
@@ -656,7 +658,7 @@ export default function ParticipantRegistration() {
                   </MonoField>
                   <MonoField label="phone">
                     <input
-                      className="mono-input text-sm sm:text-base"
+                      className="mono-input"
                       placeholder="便于紧急联系（选填）"
                       type="tel"
                       value={formData.phone}
@@ -671,7 +673,7 @@ export default function ParticipantRegistration() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden"
+                className="glass-panel rounded-2xl overflow-hidden"
               >
                 <PanelHeader
                   label="02_PROJECT.PROPOSAL"
@@ -686,17 +688,17 @@ export default function ParticipantRegistration() {
                   }
                 />
 
-                <div className="p-3 sm:p-8 space-y-4 sm:space-y-8">
+                <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
                   {/* Track selector */}
                   <div>
-                    <label className="font-mono text-[10px] sm:text-xs text-slate-400 tracking-widest uppercase block font-semibold mb-2 sm:mb-3">
+                    <label className="font-mono text-xs text-slate-400 tracking-widest uppercase block font-semibold mb-3">
                       track.selection{" "}
                       <span className="text-primary ml-1">*</span>
                     </label>
-                    <p className="text-[11px] sm:text-xs text-slate-500 mb-2 sm:mb-3">
+                    <p className="text-xs text-slate-500 mb-3">
                       选择你的参赛赛道（不限身份 · 不限年龄 · 不限技术背景）
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {TRACKS.map((track) => {
                         const isSelected = formData.track === track.id;
                         return (
@@ -705,7 +707,7 @@ export default function ParticipantRegistration() {
                             type="button"
                             onClick={() => set("track", track.id)}
                             whileTap={{ scale: 0.97 }}
-                            className={`relative flex flex-col p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 text-left transition-all duration-200 cursor-pointer
+                            className={`relative flex flex-col p-3 sm:p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer
                               ${
                                 isSelected
                                   ? `${track.bg} ${track.activeBorder} shadow-lg`
@@ -750,7 +752,7 @@ export default function ParticipantRegistration() {
                   {/* Project title */}
                   <MonoField label="project.title" required>
                     <input
-                      className="mono-input text-sm sm:text-base font-semibold"
+                      className="mono-input text-base font-semibold"
                       placeholder="你的龙虾叫什么名字 / 能做什么事"
                       type="text"
                       value={formData.projectTitle}
@@ -762,7 +764,7 @@ export default function ParticipantRegistration() {
                   {/* Project description */}
                   <MonoField label="project.description" required>
                     <textarea
-                      className="w-full bg-[rgba(255,255,255,0.02)] border-b-2 border-[rgba(100,80,75,0.5)] focus:border-primary/80 focus:bg-[rgba(255,255,255,0.04)] focus:outline-none text-slate-100 text-sm placeholder:text-slate-500 px-3 sm:px-4 py-3 sm:py-4 resize-none leading-relaxed transition-all rounded-t-lg"
+                      className="w-full bg-[rgba(255,255,255,0.02)] border-b-2 border-[rgba(100,80,75,0.5)] focus:border-primary/80 focus:bg-[rgba(255,255,255,0.04)] focus:outline-none text-slate-100 text-sm placeholder:text-slate-500 px-4 py-4 resize-none leading-relaxed transition-all rounded-t-lg"
                       placeholder="你的虾能干什么？解决了什么问题？效果如何？…"
                       rows={4}
                       value={formData.projectDescription}
@@ -771,21 +773,21 @@ export default function ParticipantRegistration() {
                         set("projectDescription", e.target.value)
                       }
                     />
-                    <p className="text-right font-mono text-[9px] sm:text-[10px] text-slate-500 mt-1">
+                    <p className="text-right font-mono text-[10px] text-slate-500 mt-1">
                       {formData.projectDescription.length} chars
                     </p>
                   </MonoField>
 
                   {/* Material links */}
                   <div>
-                    <p className="font-mono text-[10px] sm:text-xs text-slate-400 tracking-widest uppercase mb-1 sm:mb-1.5 font-semibold">
+                    <p className="font-mono text-xs text-slate-400 tracking-widest uppercase mb-1.5 font-semibold">
                       assets.manifest
                     </p>
-                    <p className="text-[10px] sm:text-xs text-slate-500 mb-2 sm:mb-3 leading-relaxed">
+                    <p className="text-xs text-slate-500 mb-3 leading-relaxed">
                       将文件上传至 Google Drive / 腾讯文档 / 飞书 /
                       钉钉后粘贴分享链接
                     </p>
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <AssetUrlRow
                         badge="PPT"
                         badgeColor="text-red-400 bg-red-400/10 border-red-400/20"
@@ -806,10 +808,10 @@ export default function ParticipantRegistration() {
 
                   {/* Links */}
                   <div>
-                    <p className="font-mono text-[10px] sm:text-xs text-slate-400 tracking-widest uppercase mb-2 sm:mb-3 font-semibold">
+                    <p className="font-mono text-xs text-slate-400 tracking-widest uppercase mb-3 font-semibold">
                       project.links
                     </p>
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <TerminalInput
                         prefix="vid://"
                         placeholder="演示视频链接（YouTube / Bilibili · 3分钟以内 · 必填）"
@@ -832,12 +834,12 @@ export default function ParticipantRegistration() {
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs sm:text-sm font-medium"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium"
                 >
-                  <span className="material-symbols-outlined text-sm sm:text-base flex-shrink-0">
+                  <span className="material-symbols-outlined text-base flex-shrink-0">
                     error
                   </span>
-                  <span className="line-clamp-2">{submitError}</span>
+                  {submitError}
                 </motion.div>
               )}
 
@@ -845,23 +847,19 @@ export default function ParticipantRegistration() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="space-y-3 sm:space-y-4 px-0 sm:px-2"
+                className="space-y-4 px-1 sm:px-2"
               >
                 {/* Selected track summary */}
                 {selectedTrack && (
                   <div
-                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl ${selectedTrack.bg} border ${selectedTrack.border}`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl ${selectedTrack.bg} border ${selectedTrack.border}`}
                   >
-                    <span className="text-lg sm:text-xl flex-shrink-0">
-                      {selectedTrack.emoji}
-                    </span>
-                    <div className="min-w-0">
-                      <p
-                        className={`text-xs sm:text-xs font-bold ${selectedTrack.color}`}
-                      >
+                    <span className="text-xl">{selectedTrack.emoji}</span>
+                    <div>
+                      <p className={`text-xs font-bold ${selectedTrack.color}`}>
                         {selectedTrack.title}
                       </p>
-                      <p className="text-[10px] sm:text-xs text-slate-500 truncate">
+                      <p className="text-xs text-slate-500">
                         {selectedTrack.subtitle}
                       </p>
                     </div>
@@ -869,26 +867,26 @@ export default function ParticipantRegistration() {
                 )}
 
                 {/* Agreement - Enhanced visibility */}
-                <div className="glass-panel rounded-lg sm:rounded-2xl overflow-hidden border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent">
-                  <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
+                <div className="glass-panel rounded-2xl overflow-hidden border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent">
+                  <div className="p-5 sm:p-6 space-y-4">
                     {/* Warning banner */}
-                    <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-amber-500/15 border border-amber-500/40">
-                      <span className="material-symbols-outlined text-amber-400 text-base sm:text-xl flex-shrink-0 mt-0.5">
+                    <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-500/15 border border-amber-500/40">
+                      <span className="material-symbols-outlined text-amber-400 text-xl flex-shrink-0 mt-0.5">
                         warning
                       </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-amber-200 text-xs sm:text-sm font-bold mb-0.5 sm:mb-1">
+                      <div className="flex-1">
+                        <p className="text-amber-200 text-sm font-bold mb-1">
                           安全与责任使用声明
                         </p>
-                        <p className="text-amber-300/80 text-[10px] sm:text-xs leading-relaxed">
+                        <p className="text-amber-300/80 text-xs leading-relaxed">
                           参赛作品须严格遵守安全原则，组委会保留取消违规作品参赛资格的权利
                         </p>
                       </div>
                     </div>
 
                     {/* Agreement checkbox */}
-                    <label className="flex items-start gap-2 sm:gap-4 cursor-pointer group">
-                      <div className="mt-1 flex-shrink-0">
+                    <label className="flex items-start gap-3 sm:gap-4 cursor-pointer group">
+                      <div className="mt-0.5 sm:mt-1 flex-shrink-0">
                         <input
                           type="checkbox"
                           required
@@ -897,24 +895,21 @@ export default function ParticipantRegistration() {
                           className="size-4 sm:size-5 rounded-md bg-surface-dark border-2 border-amber-500/50 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-dark transition-all"
                         />
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1">
                         <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                           我已阅读并同意{" "}
                           <button
                             type="button"
-                            className="inline-flex items-center gap-1 text-primary hover:text-primary/80 font-bold underline decoration-2 underline-offset-2 transition-colors"
+                            className="inline-flex items-center gap-0.5 sm:gap-1 text-primary hover:text-primary/80 font-bold underline decoration-2 underline-offset-2 transition-colors"
                             onClick={() => setTermsOpen(true)}
                           >
-                            <span className="material-symbols-outlined text-xs sm:text-base">
+                            <span className="material-symbols-outlined text-sm sm:text-base">
                               gavel
                             </span>
-                            <span className="hidden sm:inline">
-                              《参赛协议 & 安全声明》
-                            </span>
-                            <span className="sm:hidden">《协议》</span>
+                            《参赛协议 & 安全声明》
                           </button>
                         </p>
-                        <p className="text-[9px] sm:text-slate-500 mt-1 sm:mt-2 leading-relaxed">
+                        <p className="text-[10px] sm:text-xs text-slate-500 mt-1.5 sm:mt-2 leading-relaxed">
                           承诺遵守数据安全、合规使用、透明可控、知识产权保护等原则，并授权组委会展示本项目参赛资料
                         </p>
                       </div>
@@ -923,18 +918,17 @@ export default function ParticipantRegistration() {
                 </div>
 
                 {/* Submit buttons */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full pt-1 sm:pt-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full pt-2">
                   <button
                     type="button"
                     onClick={() => navigate("/")}
-                    className="order-2 sm:order-1 flex-shrink-0 px-4 sm:px-8 py-3 sm:py-4 border-2 border-slate-600 rounded-lg sm:rounded-xl text-slate-300 font-bold hover:bg-slate-800 hover:border-slate-500 transition-all text-xs sm:text-sm"
+                    className="order-2 sm:order-1 flex-shrink-0 px-5 sm:px-8 py-3 sm:py-4 border-2 border-slate-600 rounded-xl text-slate-300 font-bold hover:bg-slate-800 hover:border-slate-500 transition-all text-xs sm:text-sm"
                   >
                     <span className="flex items-center justify-center gap-1.5 sm:gap-2">
                       <span className="material-symbols-outlined text-base sm:text-lg">
                         arrow_back
                       </span>
-                      <span className="hidden sm:inline">返回首页</span>
-                      <span className="sm:hidden">返回</span>
+                      返回首页
                     </span>
                   </button>
                   <motion.button
@@ -942,8 +936,8 @@ export default function ParticipantRegistration() {
                     disabled={submitting || !agreed}
                     whileHover={!submitting && agreed ? { scale: 1.02 } : {}}
                     whileTap={!submitting && agreed ? { scale: 0.97 } : {}}
-                    className="order-1 sm:order-2 flex-1 relative py-3 sm:py-5 bg-primary text-white font-black rounded-lg sm:rounded-xl
-                      uppercase tracking-wider text-xs sm:text-base transition-all overflow-hidden
+                    className="order-1 sm:order-2 flex-1 relative py-4 sm:py-5 bg-primary text-white font-black rounded-xl
+                      uppercase tracking-wider text-sm sm:text-base transition-all overflow-hidden
                       disabled:opacity-40 disabled:cursor-not-allowed
                       shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40"
                     style={{
@@ -970,9 +964,9 @@ export default function ParticipantRegistration() {
                       />
                     )}
                     {submitting ? (
-                      <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                      <span className="flex items-center justify-center gap-2">
                         <svg
-                          className="animate-spin size-4 sm:size-5"
+                          className="animate-spin size-5"
                           viewBox="0 0 24 24"
                           fill="none"
                         >
@@ -990,17 +984,15 @@ export default function ParticipantRegistration() {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                           />
                         </svg>
-                        <span className="hidden sm:inline">提交中…</span>
-                        <span className="sm:hidden">提交中</span>
+                        提交中…
                       </span>
                     ) : (
-                      <span className="flex items-center justify-center gap-1 sm:gap-2 relative z-10">
-                        <span className="material-symbols-outlined text-base sm:text-xl">
+                      <span className="flex items-center justify-center gap-2 relative z-10">
+                        <span className="material-symbols-outlined text-xl">
                           rocket_launch
                         </span>
-                        <span className="hidden sm:inline">提交参赛作品</span>
-                        <span className="sm:hidden">提交</span>
-                        <span className="material-symbols-outlined text-base sm:text-xl">
+                        提交参赛作品
+                        <span className="material-symbols-outlined text-xl">
                           arrow_forward
                         </span>
                       </span>
@@ -1013,15 +1005,12 @@ export default function ParticipantRegistration() {
                   <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-[10px] sm:text-xs text-amber-400/80 text-center flex items-center justify-center gap-1"
+                    className="text-xs text-amber-400/80 text-center flex items-center justify-center gap-1.5"
                   >
-                    <span className="material-symbols-outlined text-xs sm:text-sm">
+                    <span className="material-symbols-outlined text-sm">
                       info
                     </span>
-                    <span className="hidden sm:inline">
-                      请先阅读并同意参赛协议后再提交
-                    </span>
-                    <span className="sm:hidden">请同意协议后提交</span>
+                    请先阅读并同意参赛协议后再提交
                   </motion.p>
                 )}
               </motion.div>

@@ -6,15 +6,15 @@ import JudgeLogin from "./pages/JudgeLogin";
 import JudgeDashboard from "./pages/JudgeDashboard";
 import JudgeScoring from "./pages/JudgeScoring";
 import Leaderboard from "./pages/Leaderboard";
-import { useDeviceType } from "./hooks/useDeviceType";
+import { useIsMobile } from "./utils/deviceDetect";
 
 function App() {
-  const { isWeb } = useDeviceType();
+  const isMobile = useIsMobile();
 
   return (
     <>
-      {/* 龙虾游标 - 仅在 Web 端显示 */}
-      {isWeb && <CursorClaw />}
+      {/* 仅在桌面端（B端）显示龙虾游标 */}
+      {!isMobile && <CursorClaw />}
       <Router>
         <Routes>
           <Route path="/" element={<RoleSelection />} />

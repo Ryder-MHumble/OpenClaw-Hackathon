@@ -12,10 +12,6 @@ const apiClient = axios.create({
 // 请求拦截器
 apiClient.interceptors.request.use(
   (config) => {
-    // 移除重复的 /api 前缀
-    if (config.url?.startsWith("/api/") && config.baseURL?.includes(":8000")) {
-      config.url = config.url.replace(/^\/api\//, "/");
-    }
     return config;
   },
   (error) => {

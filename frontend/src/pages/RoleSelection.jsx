@@ -10,7 +10,6 @@ import { useRef, useEffect, useState } from "react";
 import LobsterLogo from "../components/LobsterLogo";
 import LobsterSwimAnimation from "../components/LobsterSwimAnimation";
 import WelcomeAnimation from "../components/WelcomeAnimation";
-import { useDeviceType } from "../hooks/useDeviceType";
 
 /* ── Floating code symbols ── */
 function FloatingSymbols() {
@@ -313,7 +312,7 @@ function TiltCard({ role, onClick, index }) {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.97 }}
         onClick={onClick}
-        className={`group relative cursor-pointer rounded-2xl p-6 lg:p-8 ${cardClass} backdrop-blur-sm overflow-hidden`}
+        className={`group relative cursor-pointer rounded-2xl p-4 sm:p-6 lg:p-8 ${cardClass} backdrop-blur-sm overflow-hidden`}
       >
         <motion.div
           className="absolute w-56 h-56 rounded-full pointer-events-none"
@@ -332,44 +331,46 @@ function TiltCard({ role, onClick, index }) {
           }}
         />
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <div
-              className={`size-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 transition-all duration-300 border border-current/10`}
+              className={`size-10 sm:size-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 transition-all duration-300 border border-current/10`}
             >
               <span
-                className={`material-symbols-outlined text-2xl ${iconColor}`}
+                className={`material-symbols-outlined text-xl sm:text-2xl ${iconColor}`}
               >
                 {role.icon}
               </span>
             </div>
             <p
-              className={`text-xs ${subtitleColor} font-bold uppercase tracking-[0.2em]`}
+              className={`text-[10px] sm:text-xs ${subtitleColor} font-bold uppercase tracking-[0.2em]`}
             >
               {role.subtitle}
             </p>
           </div>
-          <h3 className="text-2xl font-black mb-2 text-white tracking-tight">
+          <h3 className="text-xl sm:text-2xl font-black mb-1.5 sm:mb-2 text-white tracking-tight">
             {role.title}
           </h3>
-          <p className="text-slate-400 leading-relaxed text-sm mb-5">
+          <p className="text-slate-400 leading-relaxed text-xs sm:text-sm mb-3 sm:mb-5">
             {role.description}
           </p>
-          <div className="space-y-2 mb-5">
+          <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-5">
             {role.features.map((f, i) => (
-              <div key={i} className="flex items-center gap-2.5">
+              <div key={i} className="flex items-center gap-2 sm:gap-2.5">
                 <div
                   className={`size-1.5 rounded-full ${dotColor} flex-shrink-0`}
                 />
-                <span className="text-slate-400 text-xs">{f}</span>
+                <span className="text-slate-400 text-[10px] sm:text-xs">
+                  {f}
+                </span>
               </div>
             ))}
           </div>
           <div
-            className={`flex items-center gap-2 ${subtitleColor} font-bold text-sm`}
+            className={`flex items-center gap-1.5 sm:gap-2 ${subtitleColor} font-bold text-xs sm:text-sm`}
           >
             <span>立即进入</span>
             <motion.span
-              className="material-symbols-outlined text-base"
+              className="material-symbols-outlined text-sm sm:text-base"
               animate={{ x: [0, 4, 0] }}
               transition={{
                 duration: 1.5,
@@ -395,7 +396,6 @@ function TiltCard({ role, onClick, index }) {
 /* ── Main Page ── */
 export default function RoleSelection() {
   const navigate = useNavigate();
-  const { isWeb } = useDeviceType();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [showWelcome, setShowWelcome] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
@@ -481,12 +481,10 @@ export default function RoleSelection() {
       <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
 
       <div className="h-screen overflow-hidden bg-[#0c0a09] font-display text-slate-100 relative flex flex-col">
-        {/* 龙虾游标效果 - 仅在 Web 端显示 */}
-        {isWeb && (
-          <div>
-            <LobsterSwimAnimation />
-          </div>
-        )}
+        {/* 龙虾游标效果 - 仅在桌面端显示（已在 App.jsx 中控制） */}
+        <div className="hidden lg:block">
+          <LobsterSwimAnimation />
+        </div>
 
         {/* Dynamic gradient */}
         <div
@@ -555,7 +553,7 @@ export default function RoleSelection() {
         </header>
 
         {/* ── Main ── */}
-        <main className="relative z-20 flex-1 flex flex-col lg:flex-row items-center justify-center px-3 sm:px-6 lg:px-16 gap-4 sm:gap-6 lg:gap-16 min-h-0 py-4 sm:py-6 lg:py-0 overflow-y-auto lg:overflow-visible">
+        <main className="relative z-20 flex-1 flex flex-col lg:flex-row items-center justify-center px-4 sm:px-6 lg:px-16 gap-6 lg:gap-16 min-h-0 py-6 lg:py-0 overflow-y-auto lg:overflow-hidden">
           {/* Left: title + info */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -568,22 +566,22 @@ export default function RoleSelection() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5 }}
-              className="inline-flex items-center gap-2 mb-3 sm:mb-4 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] w-fit"
+              className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] w-fit"
             >
-              <span className="text-[9px] sm:text-[10px] font-mono text-primary/80 tracking-[0.2em] uppercase">
+              <span className="text-[10px] font-mono text-primary/80 tracking-[0.2em] uppercase">
                 全网首个官方龙虾赛事
               </span>
             </motion.div>
 
             {/* Title */}
-            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.0] mb-2 sm:mb-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-7xl font-black tracking-tight leading-[1.1] mb-3">
               <span className="text-white">谁是</span>
               <br />
               <span className="text-gradient-primary">虾王？</span>
             </h1>
 
             {/* Subtitle */}
-            <p className="text-xs sm:text-base lg:text-lg text-slate-300 leading-relaxed mb-4 sm:mb-6 font-medium">
+            <p className="text-xs sm:text-sm lg:text-lg text-slate-300 leading-relaxed mb-4 lg:mb-6 font-medium">
               北纬·龙虾大赛（第一届）· 2026年3月
               <br />
               <span className="text-slate-400">
@@ -592,7 +590,7 @@ export default function RoleSelection() {
             </p>
 
             {/* Stats */}
-            <div className="flex items-center gap-3 sm:gap-8 text-center mb-4 sm:mb-8 flex-wrap">
+            <div className="flex items-center gap-3 sm:gap-6 lg:gap-8 text-center mb-4 lg:mb-8 flex-wrap">
               {[
                 { num: "¥53万", label: "现金奖励" },
                 { num: "千亿", label: "GLM-5 Token" },
@@ -605,10 +603,10 @@ export default function RoleSelection() {
                   transition={{ delay: 0.5 + i * 0.1, duration: 0.5 }}
                   className="flex flex-col items-center"
                 >
-                  <span className="text-lg sm:text-2xl lg:text-3xl font-black text-white">
+                  <span className="text-lg sm:text-xl lg:text-3xl font-black text-white">
                     {stat.num}
                   </span>
-                  <span className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1 font-medium">
+                  <span className="text-[10px] sm:text-xs text-slate-500 mt-0.5 lg:mt-1 font-medium">
                     {stat.label}
                   </span>
                 </motion.div>
@@ -620,63 +618,56 @@ export default function RoleSelection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.5 }}
-              className="flex items-center gap-1 mb-4 sm:mb-6 overflow-x-auto pb-2"
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-1 mb-4 lg:mb-6 overflow-x-auto"
             >
               {timeline.map((t, i) => (
-                <div key={i} className="flex items-center flex-shrink-0">
+                <div key={i} className="flex items-center w-full sm:w-auto">
                   <div
-                    className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border transition-all text-[11px] sm:text-sm ${
+                    className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border transition-all w-full sm:w-auto ${
                       t.active
                         ? "bg-primary/10 border-primary/30"
                         : "bg-white/[0.03] border-white/[0.06]"
                     }`}
                   >
                     <span
-                      className={`material-symbols-outlined text-xs sm:text-sm ${t.active ? "text-primary" : "text-slate-600"}`}
+                      className={`material-symbols-outlined text-sm ${t.active ? "text-primary" : "text-slate-600"}`}
                     >
                       {t.icon}
                     </span>
-                    <div className="hidden sm:block">
+                    <div>
                       <p
-                        className={`text-[10px] sm:text-xs font-bold ${t.active ? "text-primary" : "text-slate-500"}`}
+                        className={`text-xs font-bold ${t.active ? "text-primary" : "text-slate-500"}`}
                       >
                         {t.phase}
                       </p>
-                      <p className="text-[9px] text-slate-600 font-mono">
+                      <p className="text-[10px] text-slate-600 font-mono">
                         {t.date}
-                      </p>
-                    </div>
-                    <div className="sm:hidden">
-                      <p
-                        className={`text-[9px] font-bold ${t.active ? "text-primary" : "text-slate-500"}`}
-                      >
-                        {t.phase}
                       </p>
                     </div>
                   </div>
                   {i < timeline.length - 1 && (
-                    <div className="w-2 sm:w-4 h-px bg-white/[0.12] mx-0.5 sm:mx-1 flex-shrink-0" />
+                    <div className="hidden sm:block w-4 h-px bg-white/[0.12] mx-1" />
                   )}
                 </div>
               ))}
             </motion.div>
 
             {/* Divider */}
-            <div className="h-px bg-gradient-to-r from-primary/20 via-primary/10 to-transparent mb-3 sm:mb-4" />
+            <div className="h-px bg-gradient-to-r from-primary/20 via-primary/10 to-transparent mb-4" />
 
             {/* Organizers + terms */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.9, duration: 0.5 }}
-              className="flex flex-col gap-2 sm:gap-3"
+              className="flex flex-col gap-2 lg:gap-3"
             >
               <div>
                 <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed">
                   <span className="text-slate-400 font-semibold">主办：</span>
                   北京中关村学院 · 中关村人工智能研究院 · AI商学院
                 </p>
-                <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1 leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-slate-500 mt-1 leading-relaxed">
                   <span className="text-slate-400 font-semibold">赞助：</span>
                   北京中关村学院教育基金会 · 海淀区西北旺政府
                 </p>
@@ -688,10 +679,7 @@ export default function RoleSelection() {
                 <span className="material-symbols-outlined text-base sm:text-lg">
                   gavel
                 </span>
-                <span className="hidden sm:inline">
-                  查看参赛协议 & 安全声明
-                </span>
-                <span className="sm:hidden">查看协议</span>
+                查看参赛协议 & 安全声明
                 <span className="material-symbols-outlined text-base sm:text-lg group-hover:translate-x-1 transition-transform">
                   arrow_forward
                 </span>
@@ -700,7 +688,7 @@ export default function RoleSelection() {
           </motion.div>
 
           {/* Right: role cards */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full lg:w-[58%] max-w-3xl">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full lg:w-[58%] max-w-3xl pb-4 lg:pb-0">
             {roles.map((role, i) => (
               <TiltCard
                 key={role.id}

@@ -40,6 +40,15 @@ body {
   outline: none;
   transition: all 0.2s;
 }
+
+/* 移动端优化 */
+@media (max-width: 640px) {
+  .mono-input {
+    font-size: 0.875rem;
+    padding: 10px 6px 8px 6px;
+  }
+}
+
 .mono-input::placeholder {
   color: #64748b;
 }

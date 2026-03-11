@@ -621,8 +621,8 @@ export default function RoleSelection() {
             {/* Stats */}
             <div className="flex items-center gap-3 sm:gap-6 lg:gap-8 text-center mb-4 lg:mb-8 flex-wrap">
               {[
-                { num: "¥53万", label: "现金奖励" },
-                { num: "千亿", label: "GLM-5 Token" },
+                { num: "百万", label: "现金奖励" },
+                { num: "千亿", label: "Token" },
                 { num: "3", label: "参赛赛道" },
               ].map((stat, i) => (
                 <motion.div

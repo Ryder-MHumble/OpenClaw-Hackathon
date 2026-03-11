@@ -123,7 +123,7 @@ export default function PrizeScene({ isActive, lobsterPos }) {
           className="text-2xl sm:text-4xl font-black"
           style={{ color: "#ff5833" }}
         >
-          + 千亿 GLM-5 Token
+          + 千亿Token
         </span>
       </motion.div>
 

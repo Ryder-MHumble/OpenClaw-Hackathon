@@ -161,7 +161,7 @@ export default function ParticipantRegistration() {
                 加入 <span className="text-primary italic">龙虾军团</span>
               </h1>
               <p className="text-slate-300 max-w-lg text-xs sm:text-base font-light hidden sm:block">
-                北纬·龙虾大赛（第一届）· ¥53万现金 + 千亿 GLM-5 Token 奖池
+                北纬·龙虾大赛（第一届）· ¥53万现金 + 千亿Token 奖池
               </p>
             </div>
           </motion.div>

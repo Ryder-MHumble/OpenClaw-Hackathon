@@ -31,7 +31,7 @@ const SCENES = [
     id: 2,
     type: "prize",
     title: "530000",
-    subtitle: "千亿 GLM-5 Token",
+    subtitle: "千亿Token",
     desc: "10位获奖者，每人100亿Token",
     accent: "Token自由——从此养虾不花钱",
     duration: 4200,

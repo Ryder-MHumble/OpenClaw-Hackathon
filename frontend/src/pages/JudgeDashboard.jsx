@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import axios from "axios";
+import apiClient from "../config/apiClient";
 import { getTrackInfo } from "../constants/tracks";
 
 export default function JudgeDashboard() {
@@ -32,7 +32,7 @@ export default function JudgeDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get("/api/judges/stats");
+      const res = await apiClient.get("/api/judges/stats");
       const data = res.data.data;
       setStats({
         total: data.total_participants || 0,
@@ -57,7 +57,7 @@ export default function JudgeDashboard() {
 
       // 获取参赛者数据
       const statusParam = filter !== "all" ? `?status=${filter}` : "";
-      const res = await axios.get(`/api/judges/participants${statusParam}`);
+      const res = await apiClient.get(`/api/judges/participants${statusParam}`);
       const data = res.data.data;
 
       // 转换数据格式以匹配前端需求

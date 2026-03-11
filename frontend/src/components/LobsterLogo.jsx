@@ -1,5 +1,5 @@
 /**
- * LobsterLogo — 矢量龙虾图标
+ * LobsterLogo — 矢量龙虾图标（横向视角，类真实龙虾造型）
  * size: px 值，默认 32
  * className: 额外 class（可传颜色）
  */
@@ -8,64 +8,67 @@ export default function LobsterLogo({ size = 32, className = 'text-primary' }) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 64 64"
+      viewBox="0 0 80 60"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-label="OpenClaw 龙虾 Logo"
     >
-      {/* ── 身体（椭圆形节段） ── */}
-      <ellipse cx="32" cy="34" rx="9" ry="14" fill="currentColor" opacity="0.95" />
+      {/* ── 身体（头胸甲，横向椭圆） ── */}
+      <ellipse cx="40" cy="30" rx="16" ry="10" fill="currentColor" opacity="0.95" />
 
-      {/* 尾扇 */}
-      <path d="M23 46 Q18 56 12 58 Q16 50 23 48Z" fill="currentColor" opacity="0.85" />
-      <path d="M41 46 Q46 56 52 58 Q48 50 41 48Z" fill="currentColor" opacity="0.85" />
-      <path d="M27 47 Q25 57 21 60 Q24 52 27 49Z" fill="currentColor" opacity="0.9" />
-      <path d="M37 47 Q39 57 43 60 Q40 52 37 49Z" fill="currentColor" opacity="0.9" />
-      <path d="M32 48 L32 62" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      {/* ── 腹部节段（向右延伸） ── */}
+      <ellipse cx="56" cy="30" rx="7" ry="7.5" fill="currentColor" opacity="0.9" />
+      <ellipse cx="65" cy="30" rx="5" ry="6" fill="currentColor" opacity="0.85" />
+      <ellipse cx="72" cy="30" rx="3.5" ry="4.5" fill="currentColor" opacity="0.8" />
 
-      {/* 头胸甲 */}
-      <ellipse cx="32" cy="26" rx="10" ry="9" fill="currentColor" />
+      {/* ── 尾扇 ── */}
+      <path d="M75 30 Q80 24 80 20 Q77 26 75 28Z" fill="currentColor" opacity="0.75" />
+      <path d="M75 30 Q80 30 82 28 Q79 30 76 31Z" fill="currentColor" opacity="0.8" />
+      <path d="M75 30 Q80 36 80 40 Q77 34 75 32Z" fill="currentColor" opacity="0.75" />
+      <path d="M75 30 Q82 27 84 24 Q80 28 76 29Z" fill="currentColor" opacity="0.65" />
+      <path d="M75 30 Q82 33 84 36 Q80 32 76 31Z" fill="currentColor" opacity="0.65" />
 
-      {/* 眼睛 */}
-      <circle cx="27.5" cy="21.5" r="2.5" fill="currentColor" />
-      <circle cx="36.5" cy="21.5" r="2.5" fill="currentColor" />
-      <circle cx="27.5" cy="21.5" r="1.1" fill="#1a0a06" />
-      <circle cx="36.5" cy="21.5" r="1.1" fill="#1a0a06" />
+      {/* ── 眼睛（头部左侧） ── */}
+      <circle cx="26" cy="24" r="2.8" fill="currentColor" />
+      <circle cx="26" cy="24" r="1.3" fill="#1a0a06" />
+      <circle cx="26.6" cy="23.4" r="0.5" fill="rgba(255,255,255,0.7)" />
 
-      {/* 触角 */}
-      <path d="M27 20 Q20 14 14 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M37 20 Q44 14 50 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M27 21 Q22 18 18 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
-      <path d="M37 21 Q42 18 46 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+      <circle cx="26" cy="36" r="2.8" fill="currentColor" />
+      <circle cx="26" cy="36" r="1.3" fill="#1a0a06" />
+      <circle cx="26.6" cy="35.4" r="0.5" fill="rgba(255,255,255,0.7)" />
 
-      {/* 左大螯 */}
-      <path
-        d="M22 28 Q12 24 8 18 Q6 14 10 12 Q14 10 17 14 Q18 16 22 18"
-        stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"
-      />
-      {/* 螯钳 */}
-      <path d="M10 12 Q6 8 8 4 Q12 6 12 10Z" fill="currentColor" />
-      <path d="M10 12 Q4 12 4 16 Q8 16 10 13Z" fill="currentColor" />
+      {/* ── 触角（向左伸出） ── */}
+      <path d="M25 23 Q16 16 6 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+      <path d="M25 37 Q16 44 6 50" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+      <path d="M25 24 Q18 20 12 14" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
+      <path d="M25 36 Q18 40 12 46" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
 
-      {/* 右大螯 */}
-      <path
-        d="M42 28 Q52 24 56 18 Q58 14 54 12 Q50 10 47 14 Q46 16 42 18"
-        stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"
-      />
-      {/* 螯钳 */}
-      <path d="M54 12 Q58 8 56 4 Q52 6 52 10Z" fill="currentColor" />
-      <path d="M54 12 Q60 12 60 16 Q56 16 54 13Z" fill="currentColor" />
+      {/* ── 左大螯（上，向左前方伸出） ── */}
+      <path d="M28 24 Q18 18 12 16 Q8 15 7 18 Q6 22 10 23 Q14 24 18 22 Q22 24 28 26"
+        stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+      {/* 螯钳上叶 */}
+      <path d="M7 18 Q3 14 5 10 Q9 12 10 16Z" fill="currentColor" />
+      {/* 螯钳下叶 */}
+      <path d="M7 18 Q2 20 3 24 Q7 24 9 21Z" fill="currentColor" />
 
-      {/* 步足（左） */}
-      <path d="M23 30 Q16 28 13 32" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M23 33 Q15 32 12 36" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M23 36 Q16 36 14 40" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {/* ── 右大螯（下，向左前方伸出） ── */}
+      <path d="M28 36 Q18 42 12 44 Q8 45 7 42 Q6 38 10 37 Q14 36 18 38 Q22 36 28 34"
+        stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+      {/* 螯钳上叶 */}
+      <path d="M7 42 Q3 46 5 50 Q9 48 10 44Z" fill="currentColor" />
+      {/* 螯钳下叶 */}
+      <path d="M7 42 Q2 40 3 36 Q7 36 9 39Z" fill="currentColor" />
 
-      {/* 步足（右） */}
-      <path d="M41 30 Q48 28 51 32" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M41 33 Q49 32 52 36" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M41 36 Q48 36 50 40" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {/* ── 步足（上方 3 对） ── */}
+      <path d="M36 22 Q34 16 32 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M40 21 Q39 15 38 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M44 21 Q44 15 44 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+
+      {/* ── 步足（下方 3 对） ── */}
+      <path d="M36 38 Q34 44 32 48" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M40 39 Q39 45 38 49" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M44 39 Q44 45 44 49" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   )
 }

@@ -28,6 +28,26 @@ body {
   box-shadow: 0 0 20px rgba(255, 88, 51, 0.2);
 }
 
+/* 统一表单输入 — 底线极简风格 */
+.mono-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-bottom: 2px solid rgba(100, 80, 75, 0.5);
+  padding: 12px 8px 10px 8px;
+  color: #f1f5f9;
+  font-size: 0.9375rem;
+  outline: none;
+  transition: all 0.2s;
+}
+.mono-input::placeholder {
+  color: #64748b;
+}
+.mono-input:focus {
+  border-bottom-color: rgba(255, 88, 51, 0.8);
+  background: rgba(255, 255, 255, 0.04);
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }

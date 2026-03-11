@@ -1,62 +1,44 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import axios from 'axios'
-import LobsterLogo from '../components/LobsterLogo'
-
-const ALLOWED_DOMAIN = '@zgci.ac.cn'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
+import LobsterLogo from "../components/LobsterLogo";
 
 export default function JudgeLogin() {
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
-  const validateEmail = (val) => {
-    if (!val) return '请输入邮箱地址'
-    if (!val.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
-      return `仅限研究院员工登录（邮箱须以 ${ALLOWED_DOMAIN} 结尾）`
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(val)) return '请输入有效的邮箱格式'
-    return ''
-  }
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    const validationError = validateEmail(email)
-    if (validationError) {
-      setError(validationError)
-      return
+    e.preventDefault();
+    if (!password) {
+      setError("请输入评委密码");
+      return;
     }
 
-    setError('')
-    setLoading(true)
+    setError("");
+    setLoading(true);
     try {
-      const formData = new FormData()
-      formData.append('email', email)
-      const response = await axios.post('/api/judges/login', formData)
-      localStorage.setItem('judgeToken', response.data.token)
-      localStorage.setItem('judgeEmail', email)
-      navigate('/judge/dashboard')
+      const formData = new FormData();
+      formData.append("password", password);
+      const response = await axios.post("/api/judges/login", formData);
+      localStorage.setItem("judgeToken", response.data.token);
+      navigate("/judge/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || '登录失败，请重试')
+      setError(err.response?.data?.detail || "登录失败，请重试");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value)
-    if (error) setError('')
-  }
-
-  const isDomainValid = email.toLowerCase().endsWith(ALLOWED_DOMAIN)
-  const showDomainHint = email.length > 3 && !isDomainValid
+  };
 
   return (
     <div className="min-h-screen bg-[#0c0a09] font-display text-slate-100 relative overflow-hidden flex flex-col">
-
       {/* 背景装饰 */}
       <div className="fixed top-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/[0.05] blur-[100px] pointer-events-none animate-blob-1" />
       <div className="fixed bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-primary/[0.03] blur-[80px] pointer-events-none animate-blob-2" />
@@ -68,7 +50,7 @@ export default function JudgeLogin() {
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
         >
           <div className="size-9 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
@@ -82,10 +64,12 @@ export default function JudgeLogin() {
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
           className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 transition-colors"
         >
-          <span className="material-symbols-outlined text-base">arrow_back</span>
+          <span className="material-symbols-outlined text-base">
+            arrow_back
+          </span>
           <span>返回首页</span>
         </motion.button>
       </header>
@@ -103,13 +87,15 @@ export default function JudgeLogin() {
             <motion.div
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1, type: 'spring', bounce: 0.3 }}
+              transition={{ delay: 0.1, type: "spring", bounce: 0.3 }}
               className="inline-flex items-center justify-center mb-5"
             >
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-primary/10 scale-[1.6] animate-pulse-ring" />
                 <div className="size-16 bg-primary/10 rounded-full border border-primary/25 flex items-center justify-center shadow-[0_0_30px_rgba(255,88,51,0.15)]">
-                  <span className="material-symbols-outlined text-primary text-3xl">gavel</span>
+                  <span className="material-symbols-outlined text-primary text-3xl">
+                    gavel
+                  </span>
                 </div>
               </div>
             </motion.div>
@@ -123,7 +109,9 @@ export default function JudgeLogin() {
                 <span className="size-1.5 rounded-full bg-primary" />
                 Judge Portal
               </div>
-              <h1 className="text-4xl font-black tracking-tight mb-2">评委登录</h1>
+              <h1 className="text-4xl font-black tracking-tight mb-2">
+                评委登录
+              </h1>
               <p className="text-slate-400">欢迎参加本次黑客松评审工作</p>
             </motion.div>
           </div>
@@ -134,83 +122,51 @@ export default function JudgeLogin() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.5 }}
             className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8 shadow-2xl"
-            style={{ boxShadow: '0 0 0 1px rgba(255,88,51,0.06), 0 20px 60px rgba(0,0,0,0.5)' }}
+            style={{
+              boxShadow:
+                "0 0 0 1px rgba(255,88,51,0.06), 0 20px 60px rgba(0,0,0,0.5)",
+            }}
           >
             {/* 顶部光线 */}
             <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
             <form onSubmit={handleLogin} className="flex flex-col gap-5">
-              {/* 身份说明 */}
-              <div className="flex items-start gap-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
-                <div className="size-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="material-symbols-outlined text-primary text-xl">verified_user</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm mb-0.5">身份验证</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    请使用研究院邮箱登录，仅限
-                    <span className="text-primary font-mono mx-1 font-medium">{ALLOWED_DOMAIN}</span>
-                    域名账户
-                  </p>
-                </div>
-              </div>
-
-              {/* 邮箱输入 */}
+              {/* 密码输入 */}
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-slate-300">
-                  工作邮箱
+                  评委密码
                   <span className="text-primary ml-1">*</span>
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl pointer-events-none">
-                    alternate_email
+                    lock
                   </span>
                   <input
-                    className={`w-full pl-12 pr-12 py-4 rounded-xl border bg-background-dark text-slate-100 outline-none transition-all duration-200 placeholder:text-slate-600 font-mono text-sm ${
+                    className={`w-full pl-12 pr-12 py-4 rounded-xl border bg-background-dark text-slate-100 outline-none transition-all duration-200 placeholder:text-slate-600 text-sm ${
                       error
-                        ? 'border-red-500/50 focus:ring-2 focus:ring-red-500/30 focus:border-red-500'
-                        : isDomainValid && email
-                        ? 'border-green-500/40 focus:ring-2 focus:ring-green-500/30 focus:border-green-500/60'
-                        : 'border-primary/20 focus:ring-2 focus:ring-primary/30 focus:border-primary/60'
+                        ? "border-red-500/50 focus:ring-2 focus:ring-red-500/30 focus:border-red-500"
+                        : "border-primary/20 focus:ring-2 focus:ring-primary/30 focus:border-primary/60"
                     }`}
-                    placeholder={`yourname${ALLOWED_DOMAIN}`}
-                    type="email"
-                    value={email}
-                    onChange={handleEmailChange}
-                    autoComplete="email"
+                    placeholder="请输入评委密码"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError("");
+                    }}
+                    autoComplete="current-password"
                     required
                   />
-                  {/* 验证状态图标 */}
-                  <AnimatePresence>
-                    {email && (
-                      <motion.span
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.5 }}
-                        className={`material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none ${
-                          isDomainValid ? 'text-green-400' : 'text-red-400'
-                        }`}
-                      >
-                        {isDomainValid ? 'check_circle' : 'cancel'}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showPassword ? "visibility_off" : "visibility"}
+                    </span>
+                  </button>
                 </div>
-
-                {/* 域名提示 */}
-                <AnimatePresence>
-                  {showDomainHint && !error && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="text-xs text-amber-400/80 flex items-center gap-1.5 mt-1"
-                    >
-                      <span className="material-symbols-outlined text-sm">info</span>
-                      邮箱须以 <span className="font-mono font-medium">{ALLOWED_DOMAIN}</span> 结尾
-                    </motion.p>
-                  )}
-                </AnimatePresence>
 
                 {/* 错误提示 */}
                 <AnimatePresence>
@@ -221,7 +177,9 @@ export default function JudgeLogin() {
                       exit={{ opacity: 0 }}
                       className="text-xs text-red-400 flex items-center gap-1.5 mt-1"
                     >
-                      <span className="material-symbols-outlined text-sm">error</span>
+                      <span className="material-symbols-outlined text-sm">
+                        error
+                      </span>
                       {error}
                     </motion.p>
                   )}
@@ -240,7 +198,11 @@ export default function JudgeLogin() {
                   <>
                     <motion.span
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
                       className="material-symbols-outlined text-lg"
                     >
                       progress_activity
@@ -259,7 +221,9 @@ export default function JudgeLogin() {
 
               {/* 安全说明 */}
               <div className="flex items-start gap-2 pt-1 border-t border-white/[0.06]">
-                <span className="material-symbols-outlined text-primary/60 text-sm mt-0.5 flex-shrink-0">lock</span>
+                <span className="material-symbols-outlined text-primary/60 text-sm mt-0.5 flex-shrink-0">
+                  lock
+                </span>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   登录状态将加密存储在浏览器本地，会话有效期 24 小时。
                 </p>
@@ -274,10 +238,10 @@ export default function JudgeLogin() {
             transition={{ delay: 0.5 }}
             className="text-center text-xs text-slate-600 mt-6"
           >
-            © 2026 OpenClaw Hackathon Committee · 中关村综合产业创新研究院
+            © 2026 OpenClaw Hackathon Committee · 中关村人工智能研究院
           </motion.p>
         </motion.div>
       </main>
     </div>
-  )
+  );
 }

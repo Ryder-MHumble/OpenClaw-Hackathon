@@ -1,24 +1,52 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import axios from "axios";
 
 export default function JudgeDashboard() {
   const [participants, setParticipants] = useState([]);
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
   const [stats, setStats] = useState({
-    total: 128,
-    pending: 45,
-    approved: 62,
-    rejected: 21,
+    total: 0,
+    pending: 0,
+    reviewing: 0,
+    scored: 0,
+    rejected: 0,
   });
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
     fetchParticipants();
+    setCurrentPage(1); // Reset to first page when filter changes
   }, [filter]);
 
+  const fetchStats = async () => {
+    try {
+      const res = await axios.get("/api/judges/stats");
+      const data = res.data.data;
+      setStats({
+        total: data.total_participants || 0,
+        pending: data.pending_count || 0,
+        reviewing: data.reviewing_count || 0,
+        scored: data.scored_count || 0,
+        rejected: data.rejected_count || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
+
   const fetchParticipants = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("judgeToken");
       if (!token) {
@@ -26,92 +54,48 @@ export default function JudgeDashboard() {
         return;
       }
 
-      // Mock data for demonstration
-      const mockData = [
-        {
-          id: 1,
-          full_name: "智绘未来队",
-          project_title: "AI驱动的创意设计引擎",
-          status: "pending",
-          members: 4,
-          submitted_at: "2小时前",
-          has_pdf: true,
-          has_video: true,
-          has_url: true,
-          cover_image:
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuCSS8-tLh70ms-rupPuwm8cz-1LMlHliF5MocnYK3ByZKbTJR_VrxaN7uWu_LbV8JpYB-owUrvLRQEo-iDV35N_xdIYDgV4z8o8oyF4yarrVjIT7dGVsV7LsEYPl3XBoB34KoToMLV8P7JOROPL4GfKOGxkn4WW9JsS-vTQ2YhKgq4NHxbkcrAoARtH4LrfjXeo9Jin_HTe4-uT_GlE8jy4BBi_bv7dEOUObLqefjUVwsNAqS8SaFVkEiVfpOOAU0Rwk1sNkVK83L1D",
-        },
-        {
-          id: 2,
-          full_name: "量子极客",
-          project_title: "去中心化算力交易平台",
-          status: "approved",
-          members: 3,
-          submitted_at: "5小时前",
-          has_pdf: true,
-          has_video: false,
-          has_url: true,
-          cover_image:
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuDr6lKNC86lFPRRWdk7dMa2-I09Bs-3gcYIbhmzWnMBbxbwaOeNJxWfrv6Rd-cs-kRb7x9gsbMdWxF4iODiycTLdSo9SMt6MQ9DUBfVqxJGbnvNvyNS3XTubGqhwGZSOHsqKSTreV7-x8799emd41bZ1jkdWxbwHWHkAZpbrh1UOsumtdzxdTt8cMBGRWlEKPLe9cEcNpMIEgqu9jJVd9DfGBpSKiPLWGKqb3QAZjlAyfy7EsGag73eFNX6_f0Eges-H37lpB3ywkKD",
-        },
-        {
-          id: 3,
-          full_name: "维度几何",
-          project_title: "多模态情感计算模型",
-          status: "rejected",
-          members: 5,
-          submitted_at: "昨日",
-          has_pdf: false,
-          has_video: true,
-          has_url: false,
-          cover_image:
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuC_2ugj2Erihn0hh7jELZuJY-mRNkyUq1k5xvlZ9fufCZslu5ufwKnuvYbg8QfA9dFKLSb3tXDMKo6xise6LSDZ8AR1SjFG2eb6o0AqFSTpG3sFh6ZTIM6zxlhgRAEb-HIerC1CDKFKmJn5eOoTbfEWP2TPdH9sJ8iwCWKLFKGvzkaRXqSCTkOoQRFl8xSxTac-Qwc8xGIhesf7dssWvXXylmryEDLMKHXroI1REXk5yoq7YWgxzTKj0_gEhkgDjeUJJnzw8_1kd1NT",
-        },
-        {
-          id: 4,
-          full_name: "极境探索",
-          project_title: "高性能图数据库引擎",
-          status: "pending",
-          members: 2,
-          submitted_at: "昨日",
-          has_pdf: true,
-          has_video: false,
-          has_url: true,
-          cover_image:
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuA9fGMdH8lNc0_cNuinx4AEQZYPo7zanmpjCcCY8vamVZtnVyouIyefsp76dXgU4fjjiA9_0urWRgbzbWEsZmLe_GiWhPUj_TenV4CBaIliDp-KUwaZYKIwbWNyBzqf9GkhECy989ij8gUk4fnF-AumIXi0ChmPhSp7do093yZ0VSu3dO1LBluGj7YT3rvQ7zF7amCnFZBu4OJov0qbskn4gNHqRKJBzbg57uJPTirMxYzEVoBEJRTuOfxvNQlNm2pUMtgUTEIpd0dx",
-        },
-        {
-          id: 5,
-          full_name: "星火燎原",
-          project_title: "分布式边缘计算网关",
-          status: "approved",
-          members: 6,
-          submitted_at: "2天前",
-          has_pdf: false,
-          has_video: true,
-          has_url: true,
-          cover_image:
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuAV9bxzJeoWwphFzgzvxmpPccU-HyanmH5fB0hbdUyrOACCAZKpYymv2knEHX82Cj6xY4CMFHm4D1DOIyc5pF3k26VdxDL7T-RnW4_m2xRn8L9iUHsJf2jV56UjCv0cAFkYPkhZDX86QlOs2sZvWpiYfgHP0xpyp5osDOdtVEhUqFV7xPei0dBxjn_pNcvutWYTdu7TPEwNgN-CcfXBYXszdRnDzKt0owoWnR3QoZTB6NVetlvW7vVOhadzh55slMohx2ddHlo3BkdP",
-        },
-        {
-          id: 6,
-          full_name: "灵动核心",
-          project_title: "低代码企业级应用框架",
-          status: "pending",
-          members: 4,
-          submitted_at: "3天前",
-          has_pdf: true,
-          has_video: true,
-          has_url: false,
-          cover_image:
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuBVyrro7s2ypdTIK5z2cxf7wZeKL6BF8tK9ppP4a3BxDW68IX-sDrrrIZAGDxlyDP3qRNQyeDam-t2z6gAN-dn9_cW99iZh0ZkSOxy7XZNVM-F_yR7ZzXDpsYyEq2aoEVRgioFL9-m-E13Z4Bu6o-B_SeoDBm9u6fEVMmIF1itaD6Kp_1_mUbQL3F9rTxxfIAKlLHLm5UnjR4mBl6Y353QYMdmFIu1CsvYN5lQOf1t5mvFZWPvBh8D98JUNDMEuds24dRfFauaSQnoD",
-        },
-      ];
+      // 获取参赛者数据
+      const statusParam = filter !== "all" ? `?status=${filter}` : "";
+      const res = await axios.get(`/api/judges/participants${statusParam}`);
+      const data = res.data.data;
 
-      setParticipants(mockData);
+      // 转换数据格式以匹配前端需求
+      const formattedData = data.map((p) => ({
+        id: p.id,
+        full_name: p.full_name,
+        project_title: p.project_title,
+        status: p.status,
+        organization: p.organization,
+        submitted_at: formatDate(p.created_at),
+        has_pdf: !!p.pdf_url,
+        has_video: !!p.video_url,
+        has_url: !!p.demo_url || !!p.repo_url,
+        cover_image:
+          p.poster_url ||
+          "https://equal-white-jmg5rfasyt.edgeone.app/banner2.png",
+      }));
+
+      setParticipants(formattedData);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error fetching participants:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "未知";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffHours < 1) return "刚刚";
+    if (diffHours < 24) return `${diffHours}小时前`;
+    if (diffDays === 1) return "昨日";
+    if (diffDays < 7) return `${diffDays}天前`;
+    return date.toLocaleDateString("zh-CN");
   };
 
   const filteredParticipants = participants.filter((p) => {
@@ -122,11 +106,18 @@ export default function JudgeDashboard() {
     return matchesFilter && matchesSearch;
   });
 
+  const totalPages = Math.ceil(filteredParticipants.length / itemsPerPage);
+  const paginatedParticipants = filteredParticipants.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: { bg: "bg-amber-500/90", text: "待评审", icon: "timer" },
-      approved: { bg: "bg-green-500/90", text: "已晋级", icon: "check_circle" },
-      rejected: { bg: "bg-red-500/90", text: "已淘汰", icon: "cancel" },
+      reviewing: { bg: "bg-blue-500/90", text: "评审中", icon: "rate_review" },
+      scored: { bg: "bg-green-500/90", text: "已评分", icon: "check_circle" },
+      rejected: { bg: "bg-red-500/90", text: "已拒绝", icon: "cancel" },
     };
     return badges[status] || badges.pending;
   };
@@ -136,37 +127,29 @@ export default function JudgeDashboard() {
       {/* Header */}
       <header className="glass-panel sticky top-0 z-50 border-b border-primary/20 px-6 lg:px-20 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3 text-primary">
-              <div className="size-8 bg-primary rounded flex items-center justify-center text-white">
-                <span className="material-symbols-outlined">terminal</span>
-              </div>
-              <h2 className="text-xl font-bold leading-tight tracking-tight">
-                OpenClaw <span className="text-slate-100">开发者大赛</span>
-              </h2>
+          <div className="flex items-center gap-3 text-primary">
+            <div className="size-8 bg-primary rounded flex items-center justify-center text-white">
+              <span className="material-symbols-outlined">terminal</span>
             </div>
-            <nav className="hidden md:flex items-center gap-8">
-              <a
-                className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
-                href="#"
-              >
-                控制台
-              </a>
-              <a
-                className="text-slate-400 hover:text-primary text-sm font-medium transition-colors"
-                href="#"
-              >
-                评委指南
-              </a>
-              <a
-                className="text-primary text-sm font-bold border-b-2 border-primary pb-1"
-                href="#"
-              >
-                评审工作台
-              </a>
-            </nav>
+            <h2 className="text-xl font-bold leading-tight tracking-tight">
+              OpenClaw <span className="text-slate-100">开发者大赛</span>
+            </h2>
           </div>
           <div className="flex flex-1 justify-end gap-6 items-center">
+            <nav className="hidden md:flex items-center gap-6">
+              <button
+                onClick={() => navigate("/judge/dashboard")}
+                className="text-primary text-sm font-bold border-b-2 border-primary pb-1"
+              >
+                控制面板
+              </button>
+              <button
+                onClick={() => navigate("/judge/leaderboard")}
+                className="text-slate-600 dark:text-slate-300 hover:text-primary transition-colors text-sm font-medium"
+              >
+                排行榜
+              </button>
+            </nav>
             <label className="hidden sm:flex flex-col min-w-40 h-10 max-w-64">
               <div className="flex w-full flex-1 items-stretch rounded-lg h-full overflow-hidden">
                 <div className="text-primary/60 flex border-none bg-primary/10 items-center justify-center pl-4">
@@ -182,19 +165,6 @@ export default function JudgeDashboard() {
                 />
               </div>
             </label>
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-slate-100">评审员 0x42</p>
-                <p className="text-[10px] text-primary">高级评审专家</p>
-              </div>
-              <div className="bg-primary/20 rounded-full size-10 flex items-center justify-center border border-primary/30 overflow-hidden">
-                <img
-                  alt="评审员头像"
-                  className="w-full h-full object-cover"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgkZH_pZtpUv_v7U_mQm8MXqsEuUwQpRRpWBK8UzF-_BjaO3L7F3gd6fW96Migup8uTmpeUO5XUOAnh18lGMGKfbJFLZpIDwHP0NtlQxxu0GSzBV6Znk5lB_XMjic1rJiyN8Ep6y58V0bKFU0sAApkpIjd0VxIa9Zor915iChkOur2gov9EFT6qoxdnzwQArBQf-3cGRIXlaYZD5RDNmpOfLINV_MKieDiAD7wFDwThlDhMbLz8KrM_jK6hb_BUxyziy4h0gUpnFdI"
-                />
-              </div>
-            </div>
           </div>
         </div>
       </header>
@@ -237,7 +207,6 @@ export default function JudgeDashboard() {
               <p className="text-slate-100 text-3xl font-black">
                 {stats.total}
               </p>
-              <p className="text-green-500 text-xs font-bold">+12%</p>
             </div>
             <div className="w-full bg-white/5 h-1 rounded-full mt-4">
               <div className="bg-primary h-full rounded-full w-full"></div>
@@ -255,7 +224,12 @@ export default function JudgeDashboard() {
               {stats.pending}
             </p>
             <div className="w-full bg-white/5 h-1 rounded-full mt-4">
-              <div className="bg-amber-500 h-full rounded-full w-1/3"></div>
+              <div
+                className="bg-amber-500 h-full rounded-full"
+                style={{
+                  width: `${stats.total > 0 ? (stats.pending / stats.total) * 100 : 0}%`,
+                }}
+              ></div>
             </div>
           </motion.div>
 
@@ -265,12 +239,17 @@ export default function JudgeDashboard() {
             transition={{ delay: 0.3 }}
             className="glass-card rounded-xl p-6 border-l-4 border-l-green-500"
           >
-            <p className="text-green-500/70 text-sm font-medium">已晋级作品</p>
+            <p className="text-green-500/70 text-sm font-medium">已评分作品</p>
             <p className="text-slate-100 text-3xl font-black mt-1">
-              {stats.approved}
+              {stats.scored}
             </p>
             <div className="w-full bg-white/5 h-1 rounded-full mt-4">
-              <div className="bg-green-500 h-full rounded-full w-1/2"></div>
+              <div
+                className="bg-green-500 h-full rounded-full"
+                style={{
+                  width: `${stats.total > 0 ? (stats.scored / stats.total) * 100 : 0}%`,
+                }}
+              ></div>
             </div>
           </motion.div>
 
@@ -280,12 +259,17 @@ export default function JudgeDashboard() {
             transition={{ delay: 0.4 }}
             className="glass-card rounded-xl p-6 border-l-4 border-l-red-500"
           >
-            <p className="text-red-500/70 text-sm font-medium">已淘汰作品</p>
+            <p className="text-red-500/70 text-sm font-medium">已拒绝作品</p>
             <p className="text-slate-100 text-3xl font-black mt-1">
               {stats.rejected}
             </p>
             <div className="w-full bg-white/5 h-1 rounded-full mt-4">
-              <div className="bg-red-500 h-full rounded-full w-1/6"></div>
+              <div
+                className="bg-red-500 h-full rounded-full"
+                style={{
+                  width: `${stats.total > 0 ? (stats.rejected / stats.total) * 100 : 0}%`,
+                }}
+              ></div>
             </div>
           </motion.div>
         </div>
@@ -309,139 +293,233 @@ export default function JudgeDashboard() {
               <span className="material-symbols-outlined text-sm">
                 pending_actions
               </span>
-              待初筛 ({stats.pending})
+              待评审 ({stats.pending})
             </button>
             <button
-              onClick={() => setFilter("approved")}
-              className={`flex items-center gap-2 border-b-2 ${filter === "approved" ? "border-primary text-slate-100" : "border-transparent text-slate-400 hover:text-slate-200"} pb-4 px-2 font-medium transition-all`}
+              onClick={() => setFilter("reviewing")}
+              className={`flex items-center gap-2 border-b-2 ${filter === "reviewing" ? "border-primary text-slate-100" : "border-transparent text-slate-400 hover:text-slate-200"} pb-4 px-2 font-medium transition-all`}
+            >
+              <span className="material-symbols-outlined text-sm">
+                rate_review
+              </span>
+              评审中 ({stats.reviewing})
+            </button>
+            <button
+              onClick={() => setFilter("scored")}
+              className={`flex items-center gap-2 border-b-2 ${filter === "scored" ? "border-primary text-slate-100" : "border-transparent text-slate-400 hover:text-slate-200"} pb-4 px-2 font-medium transition-all`}
             >
               <span className="material-symbols-outlined text-sm">
                 check_circle
               </span>
-              已晋级 ({stats.approved})
+              已评分 ({stats.scored})
             </button>
             <button
               onClick={() => setFilter("rejected")}
               className={`flex items-center gap-2 border-b-2 ${filter === "rejected" ? "border-primary text-slate-100" : "border-transparent text-slate-400 hover:text-slate-200"} pb-4 px-2 font-medium transition-all`}
             >
               <span className="material-symbols-outlined text-sm">cancel</span>
-              已淘汰 ({stats.rejected})
+              已拒绝 ({stats.rejected})
             </button>
           </div>
         </div>
 
         {/* Team Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredParticipants.map((participant, index) => {
-            const badge = getStatusBadge(participant.status);
-            return (
-              <motion.div
-                key={participant.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="glass-card rounded-xl flex flex-col overflow-hidden"
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="flex items-center gap-3 text-primary">
+              <svg
+                className="animate-spin size-6"
+                viewBox="0 0 24 24"
+                fill="none"
               >
-                <div
-                  className="h-40 bg-cover bg-center relative"
-                  style={{
-                    backgroundImage: `url('${participant.cover_image}')`,
-                  }}
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+              <span className="text-sm font-bold">加载中…</span>
+            </div>
+          </div>
+        ) : filteredParticipants.length === 0 ? (
+          <div className="text-center py-20">
+            <span className="material-symbols-outlined text-6xl text-slate-600 mb-4">
+              inbox
+            </span>
+            <p className="text-slate-400 text-lg">暂无参赛项目</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedParticipants.map((participant, index) => {
+              const badge = getStatusBadge(participant.status);
+              return (
+                <motion.div
+                  key={participant.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="rounded-xl overflow-hidden group cursor-pointer"
                 >
                   <div
-                    className={`absolute top-3 right-3 ${badge.bg} text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 backdrop-blur-sm`}
+                    className="relative h-72 bg-cover bg-center rounded-xl overflow-hidden"
+                    style={{
+                      backgroundImage: `url('/api/proxy-image?url=${encodeURIComponent(participant.cover_image)}')`,
+                    }}
                   >
-                    <span className="material-symbols-outlined text-[12px] fill-1">
-                      {badge.icon}
-                    </span>
-                    {badge.text}
-                  </div>
-                </div>
-                <div className="p-5 flex flex-col flex-1">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-bold text-slate-100">
-                      {participant.full_name}
-                    </h3>
-                    <div className="flex gap-2">
-                      {participant.has_pdf && (
-                        <span className="material-symbols-outlined text-primary/60 hover:text-primary cursor-pointer text-lg">
-                          picture_as_pdf
+                    {/* 底部渐变蒙版 */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                    {/* 状态徽章 - 顶部右角 */}
+                    <div
+                      className={`absolute top-3 right-3 ${badge.bg} text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 backdrop-blur-sm`}
+                    >
+                      <span className="material-symbols-outlined text-[12px] fill-1">
+                        {badge.icon}
+                      </span>
+                      {badge.text}
+                    </div>
+
+                    {/* 内容区域 - 底部 */}
+                    <div className="absolute inset-0 flex flex-col justify-end p-5">
+                      {/* 标题和资料图标 */}
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-white mb-1">
+                            {participant.full_name}
+                          </h3>
+                          <p className="text-primary text-sm font-medium line-clamp-2">
+                            {participant.project_title}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 ml-3 flex-shrink-0">
+                          {participant.has_pdf && (
+                            <span className="material-symbols-outlined text-primary/80 hover:text-primary cursor-pointer text-lg transition-colors">
+                              picture_as_pdf
+                            </span>
+                          )}
+                          {participant.has_video && (
+                            <span className="material-symbols-outlined text-primary/80 hover:text-primary cursor-pointer text-lg transition-colors">
+                              movie
+                            </span>
+                          )}
+                          {participant.has_url && (
+                            <span className="material-symbols-outlined text-primary/80 hover:text-primary cursor-pointer text-lg transition-colors">
+                              link
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 组织和时间信息 */}
+                      <div className="flex items-center gap-4 text-xs text-slate-300 mb-4 pb-3 border-t border-white/20 pt-3">
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px]">
+                            schedule
+                          </span>
+                          {participant.submitted_at}
                         </span>
-                      )}
-                      {participant.has_video && (
-                        <span className="material-symbols-outlined text-primary/60 hover:text-primary cursor-pointer text-lg">
-                          movie
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px]">
+                            business
+                          </span>
+                          {participant.organization}
                         </span>
-                      )}
-                      {participant.has_url && (
-                        <span className="material-symbols-outlined text-primary/60 hover:text-primary cursor-pointer text-lg">
-                          link
-                        </span>
-                      )}
+                      </div>
+
+                      {/* 按钮 */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() =>
+                            navigate(`/judge/scoring/${participant.id}`)
+                          }
+                          className="flex-1 bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg text-sm font-bold transition-all duration-200 transform group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-primary/40"
+                        >
+                          查看详情
+                        </button>
+                        <button className="px-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg text-white hover:text-primary transition-all duration-200">
+                          <span className="material-symbols-outlined text-sm">
+                            more_horiz
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-primary text-sm font-medium mb-3">
-                    {participant.project_title}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-slate-400 mb-6">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px]">
-                        schedule
-                      </span>
-                      {participant.submitted_at}提交
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px]">
-                        group
-                      </span>
-                      {participant.members}人成员
-                    </span>
-                  </div>
-                  <div className="mt-auto flex gap-3">
-                    <button
-                      onClick={() =>
-                        navigate(`/judge/scoring/${participant.id}`)
-                      }
-                      className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-bold hover:bg-primary/80 transition-colors"
-                    >
-                      查看详情
-                    </button>
-                    <button className="px-3 border border-primary/30 rounded-lg text-primary hover:bg-primary/10 transition-colors">
-                      <span className="material-symbols-outlined text-sm">
-                        more_horiz
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Pagination */}
-        <div className="mt-12 flex justify-center">
-          <div className="flex items-center gap-2">
-            <button className="size-10 flex items-center justify-center rounded-lg glass-card text-slate-400 hover:text-primary transition-colors">
+        {filteredParticipants.length > 0 && (
+          <div className="mt-12 flex items-center justify-center gap-4">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="size-10 flex items-center justify-center rounded-lg glass-card text-slate-400 hover:text-primary transition-colors disabled:opacity-50"
+            >
               <span className="material-symbols-outlined">chevron_left</span>
             </button>
-            <button className="size-10 flex items-center justify-center rounded-lg bg-primary text-white font-bold">
-              1
-            </button>
-            <button className="size-10 flex items-center justify-center rounded-lg glass-card text-slate-400 hover:text-primary transition-colors font-bold">
-              2
-            </button>
-            <button className="size-10 flex items-center justify-center rounded-lg glass-card text-slate-400 hover:text-primary transition-colors font-bold">
-              3
-            </button>
-            <span className="text-slate-500 px-2">...</span>
-            <button className="size-10 flex items-center justify-center rounded-lg glass-card text-slate-400 hover:text-primary transition-colors font-bold">
-              8
-            </button>
-            <button className="size-10 flex items-center justify-center rounded-lg glass-card text-slate-400 hover:text-primary transition-colors">
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => {
+                  if (
+                    page === 1 ||
+                    page === totalPages ||
+                    Math.abs(page - currentPage) <= 1
+                  ) {
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`size-10 flex items-center justify-center rounded-lg font-bold transition-all ${
+                          page === currentPage
+                            ? "bg-primary text-white"
+                            : "glass-card text-slate-400 hover:text-primary"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  } else if (
+                    page === currentPage - 2 ||
+                    page === currentPage + 2
+                  ) {
+                    return (
+                      <span key={page} className="text-slate-500 px-1">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                },
+              )}
+            </div>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="size-10 flex items-center justify-center rounded-lg glass-card text-slate-400 hover:text-primary transition-colors disabled:opacity-50"
+            >
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
+            <div className="text-xs text-slate-500 ml-4">
+              显示 {(currentPage - 1) * itemsPerPage + 1}-
+              {Math.min(
+                currentPage * itemsPerPage,
+                filteredParticipants.length,
+              )}{" "}
+              项，共 {filteredParticipants.length} 项
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* Footer */}

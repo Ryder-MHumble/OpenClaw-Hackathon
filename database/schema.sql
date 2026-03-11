@@ -22,11 +22,10 @@ CREATE TABLE IF NOT EXISTS participants (
   demo_url            TEXT,
   repo_url            TEXT,
 
-  -- 上传文件
-  pdf_path    TEXT,           -- 本地存储路径
-  video_path  TEXT,           -- 本地存储路径
-  poster_path TEXT,           -- 宣传海报图片路径（可选，JPG/PNG/WebP）
-  pdf_text    TEXT,           -- PyPDF2 提取的正文（供搜索/AI分析）
+  -- 材料链接（外部托管：Google Drive / Bilibili / 腾讯文档等）
+  pdf_url     TEXT,           -- 项目计划书链接
+  video_url   TEXT,           -- 演示视频链接
+  poster_url  TEXT,           -- 宣传海报图片链接（可选）
 
   -- 状态流转: pending → reviewing → scored
   status TEXT NOT NULL DEFAULT 'pending'
@@ -38,7 +37,8 @@ CREATE TABLE IF NOT EXISTS participants (
 );
 
 COMMENT ON TABLE participants IS '参赛者注册信息';
-COMMENT ON COLUMN participants.pdf_text IS 'PDF全文，用于搜索和AI辅助评分';
+COMMENT ON COLUMN participants.pdf_url IS '项目计划书外链（Google Drive / 腾讯文档）';
+COMMENT ON COLUMN participants.video_url IS '演示视频外链（YouTube / Bilibili）';
 COMMENT ON COLUMN participants.status IS 'pending=待审, reviewing=评审中, scored=已评分, rejected=已拒绝';
 
 -- ============================================================
@@ -182,16 +182,19 @@ SELECT
   COUNT(*) FILTER (WHERE status = 'reviewing')    AS reviewing_count,
   COUNT(*) FILTER (WHERE status = 'scored')       AS scored_count,
   COUNT(*) FILTER (WHERE status = 'rejected')     AS rejected_count,
-  COUNT(*) FILTER (WHERE pdf_path IS NOT NULL)    AS has_pdf_count,
-  COUNT(*) FILTER (WHERE video_path IS NOT NULL)  AS has_video_count
+  COUNT(*) FILTER (WHERE pdf_url IS NOT NULL)    AS has_pdf_count,
+  COUNT(*) FILTER (WHERE video_url IS NOT NULL)  AS has_video_count
 FROM participants;
 
 COMMENT ON VIEW stats_view IS '仪表盘统计摘要';
 
 -- ============================================================
--- 增量迁移（如果表已存在，单独执行此段添加海报字段）
+-- 增量迁移（如果表已存在，执行此段将旧字段替换为 URL 字段）
 -- ============================================================
--- ALTER TABLE participants ADD COLUMN IF NOT EXISTS poster_path TEXT;
+-- ALTER TABLE participants RENAME COLUMN pdf_path    TO pdf_url;
+-- ALTER TABLE participants RENAME COLUMN video_path  TO video_url;
+-- ALTER TABLE participants RENAME COLUMN poster_path TO poster_url;
+-- ALTER TABLE participants DROP COLUMN IF EXISTS pdf_text;
 
 -- ============================================================
 -- 完成

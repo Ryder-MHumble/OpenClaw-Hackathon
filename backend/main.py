@@ -1,17 +1,16 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends
+from fastapi import FastAPI, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 from typing import Optional, List
 import os
 from dotenv import load_dotenv
 from supabase import create_client, Client
-import aiofiles
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-import PyPDF2
 import json
 import httpx
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -41,18 +40,11 @@ supabase: Client = create_client(
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this")
 ALGORITHM = "HS256"
-JUDGE_ALLOWED_DOMAIN = os.getenv("JUDGE_ALLOWED_DOMAIN", "@zgci.ac.cn")
+JUDGE_PASSWORD = os.getenv("JUDGE_PASSWORD", "")
 
 # OpenRouter AI
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "minimax/minimax-m2.5")
-
-# File storage
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(f"{UPLOAD_DIR}/pdfs", exist_ok=True)
-os.makedirs(f"{UPLOAD_DIR}/videos", exist_ok=True)
-os.makedirs(f"{UPLOAD_DIR}/posters", exist_ok=True)
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -60,83 +52,41 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-async def save_upload_file(upload_file: UploadFile, destination: str):
-    async with aiofiles.open(destination, 'wb') as out_file:
-        content = await upload_file.read()
-        await out_file.write(content)
-
-def extract_pdf_text(file_path: str) -> str:
-    try:
-        with open(file_path, 'rb') as file:
-            pdf_reader = PyPDF2.PdfReader(file)
-            text = ""
-            for page in pdf_reader.pages:
-                text += page.extract_text()
-            return text
-    except Exception as e:
-        return f"Error extracting PDF: {str(e)}"
+class RegisterRequest(BaseModel):
+    fullName: str
+    email: str
+    organization: str
+    phone: Optional[str] = None
+    track: Optional[str] = None  # academic | productivity | life
+    projectTitle: str
+    projectDescription: str
+    demoUrl: Optional[str] = None
+    repoUrl: Optional[str] = None
+    pdfUrl: Optional[str] = None
+    videoUrl: Optional[str] = None
+    posterUrl: Optional[str] = None
 
 @app.get("/")
 async def root():
     return {"message": "OpenClaw Hackathon API", "status": "running"}
 
 @app.post("/api/participants/register")
-async def register_participant(
-    fullName: str = Form(...),
-    email: str = Form(...),
-    organization: str = Form(...),
-    github: str = Form(None),
-    projectTitle: str = Form(...),
-    projectDescription: str = Form(...),
-    demoUrl: str = Form(None),
-    repoUrl: str = Form(None),
-    pdf: Optional[UploadFile] = File(None),
-    video: Optional[UploadFile] = File(None),
-    poster: Optional[UploadFile] = File(None)
-):
+async def register_participant(body: RegisterRequest):
     try:
-        # Save files
-        pdf_path = None
-        video_path = None
-        poster_path = None
-        pdf_text = None
-
-        if pdf:
-            pdf_filename = f"{datetime.now().timestamp()}_{pdf.filename}"
-            pdf_path = f"{UPLOAD_DIR}/pdfs/{pdf_filename}"
-            await save_upload_file(pdf, pdf_path)
-            pdf_text = extract_pdf_text(pdf_path)
-
-        if video:
-            video_filename = f"{datetime.now().timestamp()}_{video.filename}"
-            video_path = f"{UPLOAD_DIR}/videos/{video_filename}"
-            await save_upload_file(video, video_path)
-
-        if poster:
-            # 验证图片类型
-            allowed_image_types = {"image/jpeg", "image/png", "image/webp"}
-            if poster.content_type not in allowed_image_types:
-                raise HTTPException(status_code=400, detail="海报仅支持 JPG / PNG / WebP 格式")
-            poster_filename = f"{datetime.now().timestamp()}_{poster.filename}"
-            poster_path = f"{UPLOAD_DIR}/posters/{poster_filename}"
-            await save_upload_file(poster, poster_path)
-
-        # Insert into Supabase
         data = {
-            "full_name": fullName,
-            "email": email,
-            "organization": organization,
-            "github": github,
-            "project_title": projectTitle,
-            "project_description": projectDescription,
-            "demo_url": demoUrl,
-            "repo_url": repoUrl,
-            "pdf_path": pdf_path,
-            "video_path": video_path,
-            "poster_path": poster_path,
-            "pdf_text": pdf_text,
-            "status": "pending",
-            "created_at": datetime.utcnow().isoformat()
+            "full_name": body.fullName,
+            "email": body.email,
+            "organization": body.organization,
+            "github": body.phone,  # Using phone field temporarily for github
+            "track": body.track or None,
+            "project_title": body.projectTitle,
+            "project_description": body.projectDescription,
+            "demo_url": body.demoUrl or None,
+            "repo_url": body.repoUrl or None,
+            "pdf_url": body.pdfUrl or None,
+            "video_url": body.videoUrl or None,
+            "poster_url": body.posterUrl or None,
+            "status": "pending"
         }
 
         result = supabase.table("participants").insert(data).execute()
@@ -147,13 +97,12 @@ async def register_participant(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/judges/login")
-async def judge_login(email: str = Form(...)):
-    email = email.strip().lower()
-    if not email.endswith(JUDGE_ALLOWED_DOMAIN):
-        raise HTTPException(status_code=401, detail=f"仅限研究院员工登录（邮箱须以 {JUDGE_ALLOWED_DOMAIN} 结尾）")
+async def judge_login(password: str = Form(...)):
+    if password != JUDGE_PASSWORD:
+        raise HTTPException(status_code=401, detail="密码错误，请重试")
 
-    token = create_access_token({"sub": email, "role": "judge"})
-    return {"token": token, "message": "Login successful", "email": email}
+    token = create_access_token({"sub": "judge", "role": "judge"})
+    return {"token": token, "message": "Login successful"}
 
 @app.get("/api/judges/participants")
 async def get_participants(status: Optional[str] = None):
@@ -163,6 +112,49 @@ async def get_participants(status: Optional[str] = None):
             query = query.eq("status", status)
         result = query.execute()
         return {"data": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.patch("/api/judges/participants/{participant_id}/status")
+async def update_participant_status(
+    participant_id: int,
+    status: str = Form(...),
+    comments: str = Form(None)
+):
+    """更新参赛者状态（初筛阶段）"""
+    try:
+        # 验证状态值
+        valid_statuses = ["pending", "reviewing", "scored", "rejected"]
+        if status not in valid_statuses:
+            raise HTTPException(status_code=400, detail="Invalid status")
+
+        # 更新状态
+        result = supabase.table("participants").update({
+            "status": status,
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("id", participant_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Participant not found")
+
+        # 如果有评论，可以记录到scores表（可选）
+        if comments and status == "rejected":
+            supabase.table("scores").insert({
+                "participant_id": participant_id,
+                "judge_id": None,
+                "innovation_score": 0,
+                "technical_score": 0,
+                "market_score": 0,
+                "demo_score": 0,
+                "weighted_score": 0,
+                "comments": f"初筛不通过: {comments}",
+                "created_at": datetime.utcnow().isoformat()
+            }).execute()
+
+        return {"message": "Status updated successfully", "data": result.data}
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -227,6 +219,58 @@ async def get_stats():
         return {"data": result.data[0] if result.data else {}}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/judges/participants/{participant_id}/next")
+async def get_next_participant(participant_id: int, status: Optional[str] = None):
+    """获取当前参赛者之后的下一个参赛者"""
+    try:
+        query = supabase.table("participants").select("id, status").order("id")
+        if status:
+            query = query.eq("status", status)
+        result = query.execute()
+        all_ids = [p["id"] for p in result.data]
+
+        if participant_id in all_ids:
+            idx = all_ids.index(participant_id)
+            if idx + 1 < len(all_ids):
+                return {"data": {"next_id": all_ids[idx + 1]}}
+        return {"data": {"next_id": None}}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/proxy-image")
+async def proxy_image(url: str):
+    """代理加载外部图片，避免CORS限制"""
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://www.bilibili.com/",
+            "Accept": "image/*,*/*;q=0.8"
+        }
+
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+
+            # 获取图片的Content-Type
+            content_type = response.headers.get("content-type", "image/jpeg")
+
+            return StreamingResponse(
+                iter([response.content]),
+                media_type=content_type,
+                headers={
+                    "Cache-Control": "public, max-age=3600",
+                    "Access-Control-Allow-Origin": "*",
+                    "Content-Disposition": "inline"
+                }
+            )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"无法加载图片: HTTP {e.response.status_code}")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="图片加载超时")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"无法加载图片: {str(e)}")
+
 
 @app.get("/api/files/{file_type}/{filename}")
 async def get_file(file_type: str, filename: str):

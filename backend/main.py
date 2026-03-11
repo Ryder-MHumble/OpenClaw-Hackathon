@@ -210,7 +210,17 @@ async def get_leaderboard():
     try:
         # 使用 leaderboard_view 视图（已在数据库中聚合）
         result = supabase.table("leaderboard_view").select("*").execute()
-        return {"data": result.data}
+        leaderboard_data = result.data
+
+        # 获取所有参赛者的 poster_url
+        participants_result = supabase.table("participants").select("id, poster_url").execute()
+        poster_map = {p["id"]: p["poster_url"] for p in participants_result.data}
+
+        # 将 poster_url 添加到排行榜数据中
+        for item in leaderboard_data:
+            item["poster_url"] = poster_map.get(item.get("participant_id") or item.get("id"))
+
+        return {"data": leaderboard_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

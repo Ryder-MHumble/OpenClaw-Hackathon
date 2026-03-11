@@ -10,6 +10,7 @@ import { useRef, useEffect, useState } from "react";
 import LobsterLogo from "../components/LobsterLogo";
 import LobsterSwimAnimation from "../components/LobsterSwimAnimation";
 import WelcomeAnimation from "../components/WelcomeAnimation";
+import ParticleWaves from "../components/ParticleWaves";
 
 /* ── Floating code symbols ── */
 function FloatingSymbols() {
@@ -112,7 +113,7 @@ function TermsModal({ open, onClose }) {
                     所有赛道不限身份、不限年龄、不限技术背景，线上提交，无需到场。
                   </p>
                   <p>
-                    · 参赛者须提交：PPT（10页以内）+
+                    · 参赛者须提交：项目说明书（10页以内）+
                     演示视频（3分钟以内），海报与在线链接为可选项。
                   </p>
                   <p>
@@ -435,7 +436,7 @@ export default function RoleSelection() {
       icon: "cruelty_free",
       features: [
         "选择赛道并填写个人与项目信息",
-        "上传 PPT 材料与演示视频链接",
+        "上传 项目说明书 材料与演示视频链接",
         "可附海报图片与 Demo / GitHub 链接",
       ],
       path: "/participant/register",
@@ -449,7 +450,7 @@ export default function RoleSelection() {
       icon: "balance",
       features: [
         "查看全部参赛项目详情",
-        "在线评阅 PPT 与视频材料",
+        "在线评阅 项目说明书 与视频材料",
         "多维度评分并生成排行榜",
       ],
       path: "/judge/login",
@@ -485,6 +486,9 @@ export default function RoleSelection() {
         <div className="hidden lg:block">
           <LobsterSwimAnimation />
         </div>
+
+        {/* 粒子波浪渐变动画 */}
+        <ParticleWaves />
 
         {/* Dynamic gradient */}
         <div
@@ -553,13 +557,13 @@ export default function RoleSelection() {
         </header>
 
         {/* ── Main ── */}
-        <main className="relative z-20 flex-1 flex flex-col lg:flex-row items-center justify-center px-4 sm:px-6 lg:px-16 gap-6 lg:gap-16 min-h-0 py-6 lg:py-0 overflow-y-auto lg:overflow-hidden">
+        <main className="relative z-20 flex-1 flex flex-col lg:flex-row items-start lg:items-center justify-start lg:justify-center px-4 sm:px-6 lg:px-16 gap-6 lg:gap-16 min-h-0 py-6 lg:py-0 overflow-y-auto lg:overflow-hidden">
           {/* Left: title + info */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col justify-center w-full lg:w-[42%] flex-shrink-0"
+            className="flex flex-col justify-start lg:justify-center w-full lg:w-[42%] flex-shrink-0"
           >
             {/* Tagline badge */}
             <motion.div

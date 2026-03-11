@@ -10,7 +10,8 @@ const SCENES = [
     subtitle: "没有之二",
     desc: "目前全国没有任何一场有规模的官方龙虾赛事。",
     duration: 4000,
-    bgGradient: "radial-gradient(circle at 20% 50%, rgba(255,88,51,0.2) 0%, transparent 50%)",
+    bgGradient:
+      "radial-gradient(circle at 20% 50%, rgba(255,88,51,0.2) 0%, transparent 50%)",
   },
   {
     id: 1,
@@ -23,7 +24,8 @@ const SCENES = [
       { icon: "corporate_fare", text: "大厂在疯抢它" },
     ],
     duration: 4500,
-    bgGradient: "radial-gradient(circle at 80% 50%, rgba(255,160,50,0.15) 0%, transparent 50%)",
+    bgGradient:
+      "radial-gradient(circle at 80% 50%, rgba(255,160,50,0.15) 0%, transparent 50%)",
   },
   {
     id: 2,
@@ -33,7 +35,8 @@ const SCENES = [
     desc: "10位获奖者，每人100亿Token",
     accent: "Token自由——从此养虾不花钱",
     duration: 4200,
-    bgGradient: "radial-gradient(circle at 50% 40%, rgba(255,200,50,0.15) 0%, transparent 50%)",
+    bgGradient:
+      "radial-gradient(circle at 50% 40%, rgba(255,200,50,0.15) 0%, transparent 50%)",
   },
   {
     id: 3,
@@ -46,21 +49,43 @@ const SCENES = [
       { icon: "hardware", text: "鼓励龙虾接入硬件设备，打开想象边界" },
     ],
     duration: 4500,
-    bgGradient: "radial-gradient(circle at 20% 60%, rgba(80,200,140,0.1) 0%, transparent 50%)",
+    bgGradient:
+      "radial-gradient(circle at 20% 60%, rgba(80,200,140,0.1) 0%, transparent 50%)",
   },
   {
     id: 4,
     type: "safety",
     title: "安全与负责任使用",
     principles: [
-      { icon: "lock", title: "数据安全", desc: "严禁非法获取或泄露用户隐私数据。参赛作品不得将 OpenClaw 暴露于公网，运行环境须做好权限隔离。" },
-      { icon: "balance", title: "合规使用", desc: "不得用于违反法律法规及公序良俗的用途。严格管理插件来源，仅使用经可信渠道验证的扩展程序。" },
-      { icon: "target", title: "透明可控", desc: "鼓励清晰展示虾的行为边界与安全机制。懂得有所不为、知道边界在哪里的虾，才是可靠的虾。" },
-      { icon: "library_books", title: "尊重知识产权", desc: "虾所生成的内容应充分尊重原创版权与创作者权益。" },
-      { icon: "handshake", title: "社会责任", desc: "以虾助力弱势群体、提升公共服务效率的作品，将获得评审的额外关注。" },
+      {
+        icon: "lock",
+        title: "数据安全",
+        desc: "严禁非法获取或泄露用户隐私数据。参赛作品不得将 OpenClaw 暴露于公网，运行环境须做好权限隔离。",
+      },
+      {
+        icon: "balance",
+        title: "合规使用",
+        desc: "不得用于违反法律法规及公序良俗的用途。严格管理插件来源，仅使用经可信渠道验证的扩展程序。",
+      },
+      {
+        icon: "target",
+        title: "透明可控",
+        desc: "鼓励清晰展示虾的行为边界与安全机制。懂得有所不为、知道边界在哪里的虾，才是可靠的虾。",
+      },
+      {
+        icon: "library_books",
+        title: "尊重知识产权",
+        desc: "虾所生成的内容应充分尊重原创版权与创作者权益。",
+      },
+      {
+        icon: "handshake",
+        title: "社会责任",
+        desc: "以虾助力弱势群体、提升公共服务效率的作品，将获得评审的额外关注。",
+      },
     ],
     duration: 5000,
-    bgGradient: "radial-gradient(circle at 80% 60%, rgba(100,200,150,0.12) 0%, transparent 50%)",
+    bgGradient:
+      "radial-gradient(circle at 80% 60%, rgba(100,200,150,0.12) 0%, transparent 50%)",
   },
   {
     id: 5,
@@ -69,18 +94,19 @@ const SCENES = [
     subtitle: "北纬·龙虾大赛（第一届）",
     accent: "2026年3月11日 — 3月22日",
     duration: null,
-    bgGradient: "radial-gradient(circle at 50% 50%, rgba(255,88,51,0.2) 0%, transparent 50%)",
+    bgGradient:
+      "radial-gradient(circle at 50% 50%, rgba(255,88,51,0.2) 0%, transparent 50%)",
   },
 ];
 
-const PARTICLES = Array.from({ length: 50 }, (_, i) => ({
+const PARTICLES = Array.from({ length: 80 }, (_, i) => ({
   id: i,
   x: Math.random() * 100,
   y: Math.random() * 100,
-  size: 0.5 + Math.random() * 2,
-  dur: 4 + Math.random() * 6,
-  delay: Math.random() * 3,
-  opacity: 0.02 + Math.random() * 0.08,
+  size: 0.5 + Math.random() * 3,
+  dur: 3 + Math.random() * 5,
+  delay: Math.random() * 4,
+  opacity: 0.03 + Math.random() * 0.12,
 }));
 
 function Particles() {
@@ -89,17 +115,20 @@ function Particles() {
       {PARTICLES.map((p) => (
         <motion.div
           key={p.id}
-          className="absolute rounded-full bg-white"
+          className="absolute rounded-full"
           style={{
             left: `${p.x}%`,
             top: `${p.y}%`,
             width: p.size,
             height: p.size,
+            background: `radial-gradient(circle, rgba(255,88,51,${p.opacity * 1.5}), rgba(255,160,80,${p.opacity * 0.8}))`,
+            boxShadow: `0 0 ${p.size * 2}px rgba(255,88,51,${p.opacity * 0.6})`,
           }}
           animate={{
-            y: [0, -100, 0],
-            opacity: [p.opacity * 0.5, p.opacity * 2, p.opacity * 0.5],
-            scale: [1, 1.5, 0.8],
+            y: [0, -120, 0],
+            x: [0, Math.sin(p.id) * 30, 0],
+            opacity: [p.opacity * 0.3, p.opacity * 2.5, p.opacity * 0.3],
+            scale: [0.8, 1.8, 0.6],
           }}
           transition={{
             duration: p.dur,
@@ -117,33 +146,33 @@ function HeroContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.div
         className="text-6xl sm:text-8xl font-black tracking-tight text-white leading-none mb-2"
-        initial={{ y: 40, opacity: 0 }}
+        initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
+        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.title}
       </motion.div>
       <motion.div
         className="text-6xl sm:text-8xl font-black tracking-tight leading-none mb-10"
         style={{ color: "#ff5833" }}
-        initial={{ y: 40, opacity: 0 }}
+        initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.8 }}
+        transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.subtitle}
       </motion.div>
       <motion.p
         className="text-slate-400 text-base sm:text-xl leading-relaxed max-w-2xl"
-        initial={{ y: 20, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.8 }}
+        transition={{ delay: 0.6, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.desc}
       </motion.p>
@@ -155,16 +184,16 @@ function ContextContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center px-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.h2
         className="text-4xl sm:text-6xl font-black text-white mb-12 text-center"
-        initial={{ y: 40, opacity: 0 }}
+        initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
+        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.title}
       </motion.h2>
@@ -178,11 +207,12 @@ function ContextContent({ scene }) {
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(255,88,51,0.2)",
             }}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
             transition={{
               delay: 0.3 + i * 0.15,
-              duration: 0.6,
+              duration: 0.8,
+              ease: [0.22, 1, 0.36, 1],
             }}
           >
             <span
@@ -203,25 +233,25 @@ function PrizeContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.div
         className="text-6xl sm:text-8xl font-black text-white mb-4"
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={{ scale: 0.7, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
+        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         ¥{scene.title}
       </motion.div>
       <motion.div
         className="text-3xl sm:text-4xl font-black mb-8"
         style={{ color: "#ff5833" }}
-        initial={{ y: 20, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.8 }}
+        transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.subtitle}
       </motion.div>
@@ -229,7 +259,7 @@ function PrizeContent({ scene }) {
         className="text-slate-400 text-lg mb-4"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.8 }}
+        transition={{ delay: 0.6, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.desc}
       </motion.p>
@@ -238,7 +268,7 @@ function PrizeContent({ scene }) {
         style={{ color: "#ff5833" }}
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.8 }}
+        transition={{ delay: 0.8, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.accent}
       </motion.p>
@@ -250,16 +280,16 @@ function WhyContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center px-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.h2
         className="text-4xl sm:text-5xl font-black text-white mb-8 text-center"
-        initial={{ y: 40, opacity: 0 }}
+        initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
+        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.title}
       </motion.h2>
@@ -273,11 +303,12 @@ function WhyContent({ scene }) {
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,88,51,0.15)",
             }}
-            initial={{ x: -40, opacity: 0 }}
+            initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{
               delay: 0.3 + i * 0.15,
-              duration: 0.6,
+              duration: 0.8,
+              ease: [0.22, 1, 0.36, 1],
             }}
           >
             <span
@@ -286,7 +317,9 @@ function WhyContent({ scene }) {
             >
               {p.icon}
             </span>
-            <span className="text-slate-200 text-sm sm:text-base font-medium">{p.text}</span>
+            <span className="text-slate-200 text-sm sm:text-base font-medium">
+              {p.text}
+            </span>
           </motion.div>
         ))}
       </div>
@@ -298,18 +331,21 @@ function SafetyContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center px-6 py-12"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.h2
         className="text-3xl sm:text-4xl font-black text-white mb-2 text-center flex items-center justify-center gap-2"
-        initial={{ y: 40, opacity: 0 }}
+        initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
+        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
-        <span className="material-symbols-outlined" style={{ color: "#ff5833" }}>
+        <span
+          className="material-symbols-outlined"
+          style={{ color: "#ff5833" }}
+        >
           security
         </span>
         {scene.title}
@@ -325,11 +361,12 @@ function SafetyContent({ scene }) {
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,88,51,0.15)",
             }}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
             transition={{
               delay: 0.3 + i * 0.1,
-              duration: 0.6,
+              duration: 0.8,
+              ease: [0.22, 1, 0.36, 1],
             }}
           >
             <div className="flex items-center gap-2 mb-2">
@@ -341,7 +378,9 @@ function SafetyContent({ scene }) {
               </span>
               <h3 className="text-base font-bold text-white">{p.title}</h3>
             </div>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{p.desc}</p>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              {p.desc}
+            </p>
           </motion.div>
         ))}
       </div>
@@ -350,7 +389,7 @@ function SafetyContent({ scene }) {
         className="text-slate-500 text-xs font-mono mt-8 text-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.6 }}
+        transition={{ delay: 1, duration: 0.8 }}
       >
         组委会将对违反上述原则的作品保留取消参赛资格的权利
       </motion.p>
@@ -362,25 +401,25 @@ function CtaContent({ scene, onEnter }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.div
         className="text-6xl sm:text-8xl font-black text-white mb-6 leading-none"
-        initial={{ y: 40, opacity: 0 }}
+        initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
+        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.title}
       </motion.div>
 
       <motion.p
         className="text-slate-200 text-2xl sm:text-3xl font-bold mb-6"
-        initial={{ y: 20, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.8 }}
+        transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         {scene.subtitle}
       </motion.p>
@@ -393,7 +432,7 @@ function CtaContent({ scene, onEnter }) {
         }}
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.8 }}
+        transition={{ delay: 0.6, duration: 1, ease: [0.22, 1, 0.36, 1] }}
       >
         <span className="material-symbols-outlined text-primary text-lg">
           calendar_today
@@ -407,12 +446,13 @@ function CtaContent({ scene, onEnter }) {
         className="relative px-16 py-5 font-black text-xl rounded-2xl text-white overflow-hidden group"
         style={{
           background: "linear-gradient(135deg, #ff5833 0%, #ff7849 100%)",
-          boxShadow: "0 8px 32px rgba(255,88,51,0.5), 0 0 80px rgba(255,88,51,0.2)",
+          boxShadow:
+            "0 8px 32px rgba(255,88,51,0.5), 0 0 80px rgba(255,88,51,0.2)",
           border: "2px solid rgba(255,88,51,0.8)",
         }}
-        initial={{ scale: 0.85, opacity: 0, y: 20 }}
+        initial={{ scale: 0.85, opacity: 0, y: 30 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.8, type: "spring", bounce: 0.5 }}
+        transition={{ delay: 0.8, duration: 1, type: "spring", bounce: 0.5 }}
         whileHover={{ scale: 1.08, y: -2 }}
         whileTap={{ scale: 0.95 }}
         onClick={onEnter}
@@ -420,7 +460,8 @@ function CtaContent({ scene, onEnter }) {
         <motion.div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)",
+            background:
+              "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)",
           }}
           animate={{ x: ["-100%", "200%"] }}
           transition={{
@@ -431,7 +472,9 @@ function CtaContent({ scene, onEnter }) {
           }}
         />
         <span className="relative z-10 flex items-center gap-3">
-          <span className="material-symbols-outlined text-2xl">rocket_launch</span>
+          <span className="material-symbols-outlined text-2xl">
+            rocket_launch
+          </span>
           进入大赛
           <span className="material-symbols-outlined text-2xl group-hover:translate-x-1 transition-transform">
             arrow_forward
@@ -443,7 +486,7 @@ function CtaContent({ scene, onEnter }) {
         className="text-slate-500 text-xs mt-6 font-mono"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.6 }}
+        transition={{ delay: 1, duration: 0.8 }}
       >
         点击按钮或按 ESC 键继续
       </motion.p>
@@ -484,7 +527,8 @@ export default function WelcomeAnimation({ onDone }) {
 
   const scene = SCENES[sceneIdx];
   const progress = ((sceneIdx + 1) / SCENES.length) * 100;
-  const lobsterX = sceneIdx === 0 ? "10%" : sceneIdx === 5 ? "50%" : `${15 + sceneIdx * 15}%`;
+  const lobsterX =
+    sceneIdx === 0 ? "10%" : sceneIdx === 5 ? "50%" : `${15 + sceneIdx * 15}%`;
 
   return (
     <AnimatePresence>
@@ -492,17 +536,37 @@ export default function WelcomeAnimation({ onDone }) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 0.98, filter: "blur(4px)" }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          exit={{ opacity: 0, scale: 0.98, filter: "blur(8px)" }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden"
           style={{ background: "#0c0a09" }}
         >
+          {/* 主背景渐变 - 带平滑过渡 */}
           <motion.div
             className="absolute inset-0"
             animate={{
               background: scene.bgGradient,
             }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+          />
+
+          {/* 额外的动态渐变层 */}
+          <motion.div
+            className="absolute inset-0"
+            style={{
+              background: `
+                radial-gradient(ellipse 100% 80% at 30% 40%, rgba(255,88,51,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 80% 60% at 70% 60%, rgba(255,160,80,0.08) 0%, transparent 50%)
+              `,
+            }}
+            animate={{
+              opacity: [0.4, 0.8, 0.4],
+            }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
           />
 
           <Particles />
@@ -512,7 +576,8 @@ export default function WelcomeAnimation({ onDone }) {
           <div
             className="absolute top-0 left-0 right-0 h-px pointer-events-none"
             style={{
-              background: "linear-gradient(90deg, transparent, rgba(255,88,51,0.5), transparent)",
+              background:
+                "linear-gradient(90deg, transparent, rgba(255,88,51,0.5), transparent)",
             }}
           />
 
@@ -591,7 +656,11 @@ export default function WelcomeAnimation({ onDone }) {
                 <SafetyContent key={sceneIdx} scene={scene} />
               )}
               {scene.type === "cta" && (
-                <CtaContent key={sceneIdx} scene={scene} onEnter={handleEnter} />
+                <CtaContent
+                  key={sceneIdx}
+                  scene={scene}
+                  onEnter={handleEnter}
+                />
               )}
             </AnimatePresence>
           </div>

@@ -106,7 +106,7 @@ function TermsModal({ open, onClose }) {
                     所有赛道不限身份、不限年龄、不限技术背景，线上提交，无需到场。
                   </li>
                   <li>
-                    · 须提交 PPT（10页以内）+
+                    · 须提交项目说明书（10页以内）+
                     演示视频（3分钟以内），海报与链接为选填。
                   </li>
                   <li>· 每个邮箱仅可报名一次，每位参赛者每赛道限一份作品。</li>
@@ -221,6 +221,7 @@ function AssetUrlRow({
         type="url"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        required={!optional}
       />
       {value && (
         <span className="flex-shrink-0 size-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50 mr-3" />
@@ -235,7 +236,7 @@ function AssetUrlRow({
 }
 
 /* ── Terminal input ── */
-function TerminalInput({ prefix, placeholder, value, onChange }) {
+function TerminalInput({ prefix, placeholder, value, onChange, required }) {
   return (
     <div className="flex items-center gap-0 rounded-lg border-2 border-[rgba(100,80,75,0.4)] focus-within:border-primary/50 transition-colors overflow-hidden bg-[rgba(255,255,255,0.02)]">
       <span className="font-mono text-xs text-slate-400 px-3 py-3 bg-surface-dark/60 border-r-2 border-[rgba(100,80,75,0.4)] flex-shrink-0 select-none font-semibold">
@@ -247,6 +248,7 @@ function TerminalInput({ prefix, placeholder, value, onChange }) {
         type="url"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        required={required}
       />
     </div>
   );
@@ -360,6 +362,7 @@ export default function ParticipantRegistration() {
       formData.projectTitle &&
       formData.projectDescription &&
       formData.pdfUrl &&
+      formData.posterUrl &&
       formData.videoUrl;
     if (!step1Done) return 1;
     if (!step2Done) return 2;
@@ -656,7 +659,7 @@ export default function ParticipantRegistration() {
                       onChange={(e) => set("organization", e.target.value)}
                     />
                   </MonoField>
-                  <MonoField label="phone">
+                  <MonoField label="phone" required>
                     <input
                       className="mono-input"
                       placeholder="便于紧急联系（选填）"
@@ -789,19 +792,25 @@ export default function ParticipantRegistration() {
                     </p>
                     <div className="space-y-2.5">
                       <AssetUrlRow
-                        badge="PPT"
+                        badge="项目说明书"
                         badgeColor="text-red-400 bg-red-400/10 border-red-400/20"
-                        placeholder="项目 PPT 链接（10页以内 · 必填）"
+                        placeholder="项目说明书链接（10页以内 · 必填）"
                         value={formData.pdfUrl}
                         onChange={(v) => set("pdfUrl", v)}
                       />
                       <AssetUrlRow
-                        badge="IMG"
+                        badge="项目海报"
                         badgeColor="text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
-                        placeholder="宣传海报图片链接（选填）"
-                        optional
+                        placeholder="宣传海报图片链接（必填）"
                         value={formData.posterUrl}
                         onChange={(v) => set("posterUrl", v)}
+                      />
+                      <AssetUrlRow
+                        badge="vid://"
+                        badgeColor="text-purple-400 bg-purple-400/10 border-purple-400/20"
+                        placeholder="演示视频链接（YouTube / Bilibili · 3分钟以内 · 必填）"
+                        value={formData.videoUrl}
+                        onChange={(v) => set("videoUrl", v)}
                       />
                     </div>
                   </div>
@@ -812,12 +821,6 @@ export default function ParticipantRegistration() {
                       project.links
                     </p>
                     <div className="space-y-2.5">
-                      <TerminalInput
-                        prefix="vid://"
-                        placeholder="演示视频链接（YouTube / Bilibili · 3分钟以内 · 必填）"
-                        value={formData.videoUrl}
-                        onChange={(v) => set("videoUrl", v)}
-                      />
                       <TerminalInput
                         prefix="git://"
                         placeholder="GitHub 仓库地址（选填）"

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../config/apiClient";
+import { API_BASE_URL } from "../config/api";
 
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -212,7 +213,7 @@ export default function Leaderboard() {
                     <img
                       alt={leaderboard[1].team_name}
                       className="w-full h-full object-cover"
-                      src={leaderboard[1].poster_url}
+                      src={`${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(leaderboard[1].poster_url)}`}
                     />
                   </div>
                   <p className="text-slate-300 font-bold text-sm md:text-base">
@@ -243,7 +244,7 @@ export default function Leaderboard() {
                       <img
                         alt={leaderboard[0].team_name}
                         className="w-full h-full object-cover"
-                        src={leaderboard[0].poster_url}
+                        src={`${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(leaderboard[0].poster_url)}`}
                       />
                     </div>
                   </div>
@@ -271,7 +272,7 @@ export default function Leaderboard() {
                     <img
                       alt={leaderboard[2].team_name}
                       className="w-full h-full object-cover"
-                      src={leaderboard[2].poster_url}
+                      src={`${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(leaderboard[2].poster_url)}`}
                     />
                   </div>
                   <p className="text-slate-300 font-bold text-sm md:text-base">

@@ -11,12 +11,12 @@ const getApiBaseUrl = () => {
   const port = window.location.port;
 
   // 如果是公网 IP 或域名，后端在同一服务器的 8000 端口
-  if (hostname === '43.98.254.243' || hostname.includes('.')) {
+  if (hostname === '43.98.254.243') {
     return `${protocol}//${hostname}:8000`;
   }
 
   // 默认：使用相对路径
-  return 'http://43.98.254.243:3000';
+  return 'https://claw.lab.bza.edu.cn';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

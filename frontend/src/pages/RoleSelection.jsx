@@ -334,13 +334,19 @@ function TiltCard({ role, onClick, index }) {
         <div className="relative z-10">
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <div
-              className={`size-10 sm:size-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 transition-all duration-300 border border-current/10`}
+              className={`size-10 sm:size-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 transition-all duration-300 border border-current/10 overflow-hidden`}
             >
-              <span
-                className={`material-symbols-outlined text-xl sm:text-2xl ${iconColor}`}
-              >
-                {role.icon}
-              </span>
+              {role.emoji ? (
+                <span className="text-xl sm:text-2xl select-none leading-none">
+                  {role.emoji}
+                </span>
+              ) : (
+                <span
+                  className={`material-symbols-outlined text-xl sm:text-2xl ${iconColor}`}
+                >
+                  {role.icon}
+                </span>
+              )}
             </div>
             <p
               className={`text-[10px] sm:text-xs ${subtitleColor} font-bold uppercase tracking-[0.2em]`}
@@ -434,6 +440,7 @@ export default function RoleSelection() {
       description:
         "展示你的龙虾能干什么——学术、生产力或生活三大赛道，无论背景皆可参赛",
       icon: "cruelty_free",
+      emoji: "🦞",
       features: [
         "选择赛道并填写个人与项目信息",
         "上传 项目说明书 材料与演示视频链接",
@@ -448,6 +455,7 @@ export default function RoleSelection() {
       description:
         "浏览所有参赛作品、在线预览资料，并对项目进行初筛与全维度评分",
       icon: "balance",
+      emoji: "⚖️",
       features: [
         "查看全部参赛项目详情",
         "在线评阅 项目说明书 与视频材料",
@@ -481,7 +489,7 @@ export default function RoleSelection() {
       {/* Terms modal */}
       <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
 
-      <div className="h-screen overflow-hidden bg-[#0c0a09] font-display text-slate-100 relative flex flex-col">
+      <div className="h-[100dvh] overflow-hidden bg-[#0c0a09] font-display text-slate-100 relative flex flex-col">
         {/* 龙虾游标效果 - 仅在桌面端显示（已在 App.jsx 中控制） */}
         <div className="hidden lg:block">
           <LobsterSwimAnimation />

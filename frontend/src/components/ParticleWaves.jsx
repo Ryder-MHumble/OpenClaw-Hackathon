@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
 
-// 生成波浪粒子
-const WAVE_PARTICLES = Array.from({ length: 60 }, (_, i) => ({
+// 减少粒子数量以提升性能
+const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
+// 生成波浪粒子 - 大幅减少数量
+const WAVE_PARTICLES = Array.from({ length: isMobile ? 15 : 25 }, (_, i) => ({
   id: i,
-  x: (i * 100) / 60,
+  x: (i * 100) / (isMobile ? 15 : 25),
   baseY: 50 + Math.sin(i * 0.5) * 20,
   amplitude: 15 + Math.random() * 25,
   frequency: 0.02 + Math.random() * 0.03,
@@ -14,8 +17,8 @@ const WAVE_PARTICLES = Array.from({ length: 60 }, (_, i) => ({
   delay: Math.random() * 5,
 }));
 
-// 额外的漂浮粒子
-const FLOAT_PARTICLES = Array.from({ length: 40 }, (_, i) => ({
+// 额外的漂浮粒子 - 大幅减少数量
+const FLOAT_PARTICLES = Array.from({ length: isMobile ? 10 : 20 }, (_, i) => ({
   id: i + 100,
   x: Math.random() * 100,
   y: Math.random() * 100,
@@ -29,7 +32,7 @@ const FLOAT_PARTICLES = Array.from({ length: 40 }, (_, i) => ({
 
 export default function ParticleWaves() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none will-change-transform">
       {/* 波浪粒子 */}
       {WAVE_PARTICLES.map((p) => (
         <motion.div
@@ -41,6 +44,7 @@ export default function ParticleWaves() {
             height: p.size,
             background: `radial-gradient(circle, rgba(255,88,51,${p.opacity * 1.2}), rgba(255,120,80,${p.opacity * 0.6}))`,
             boxShadow: `0 0 ${p.size * 3}px rgba(255,88,51,${p.opacity * 0.8})`,
+            willChange: "transform",
           }}
           animate={{
             y: [
@@ -72,6 +76,7 @@ export default function ParticleWaves() {
             height: p.size,
             background: `radial-gradient(circle, rgba(255,160,80,${p.opacity * 1.5}), rgba(255,200,120,${p.opacity * 0.5}))`,
             boxShadow: `0 0 ${p.size * 2}px rgba(255,160,80,${p.opacity})`,
+            willChange: "transform",
           }}
           animate={{
             x: [0, p.moveX, 0],

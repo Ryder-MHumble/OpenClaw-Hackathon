@@ -12,6 +12,9 @@ export default function CursorClaw() {
     const glow = glowRef.current;
     if (!cursor || !glow) return;
 
+    let animationId;
+    let isAnimating = false;
+
     const handleMouseMove = (e) => {
       targetRef.current = { x: e.clientX, y: e.clientY };
       if (!isVisibleRef.current) {
@@ -19,21 +22,30 @@ export default function CursorClaw() {
         cursor.style.opacity = "1";
         glow.style.opacity = "0.4";
       }
+
+      // Start animation only when mouse moves
+      if (!isAnimating) {
+        isAnimating = true;
+        animate();
+      }
     };
 
     const handleMouseLeave = () => {
       isVisibleRef.current = false;
       cursor.style.opacity = "0";
       glow.style.opacity = "0";
+      isAnimating = false;
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
     };
 
-    // Animation loop using requestAnimationFrame
-    let animationId;
+    // Animation loop - stops when cursor reaches target
     const animate = () => {
       const current = posRef.current;
       const target = targetRef.current;
 
-      // Smooth interpolation with higher responsiveness
+      // Smooth interpolation
       current.x += (target.x - current.x) * 0.25;
       current.y += (target.y - current.y) * 0.25;
 
@@ -41,16 +53,25 @@ export default function CursorClaw() {
       cursor.style.transform = `translate3d(${current.x - 20}px, ${current.y - 20}px, 0)`;
       glow.style.transform = `translate3d(${current.x - 32}px, ${current.y - 32}px, 0)`;
 
-      animationId = requestAnimationFrame(animate);
-    };
+      // Stop animation when close enough to target
+      const dx = target.x - current.x;
+      const dy = target.y - current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
 
-    animate();
+      if (distance > 0.5 && isAnimating) {
+        animationId = requestAnimationFrame(animate);
+      } else {
+        isAnimating = false;
+      }
+    };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     document.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      cancelAnimationFrame(animationId);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
     };

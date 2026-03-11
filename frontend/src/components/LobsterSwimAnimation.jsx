@@ -113,7 +113,11 @@ export default function LobsterSwimAnimation() {
         }
 
         // Find target for fighting
-        if (!this.isFighting && this.fightCooldown === 0 && Math.random() < 0.02) {
+        if (
+          !this.isFighting &&
+          this.fightCooldown === 0 &&
+          Math.random() < 0.02
+        ) {
           const target = this.findNearestTarget(lobsters);
           if (target) {
             this.isFighting = true;
@@ -243,17 +247,17 @@ export default function LobsterSwimAnimation() {
             s * 1.75 + Math.cos(fa) * s * 0.3,
             Math.sin(fa) * s * 0.3,
             s * 1.75 + Math.cos(fa) * s * 0.55,
-            Math.sin(fa) * s * 0.55
+            Math.sin(fa) * s * 0.55,
           );
           ctx.lineTo(
             s * 1.75 + Math.cos(fa) * s * 0.45,
-            Math.sin(fa) * s * 0.55 + Math.cos(fa) * s * 0.06
+            Math.sin(fa) * s * 0.55 + Math.cos(fa) * s * 0.06,
           );
           ctx.quadraticCurveTo(
             s * 1.75 + Math.cos(fa) * s * 0.2,
             Math.sin(fa) * s * 0.2,
             s * 1.75,
-            0
+            0,
           );
           ctx.fill();
         }
@@ -361,7 +365,12 @@ export default function LobsterSwimAnimation() {
         for (const lx of legXOffsets) {
           ctx.beginPath();
           ctx.moveTo(lx, -s * 0.48);
-          ctx.quadraticCurveTo(lx - s * 0.05, -s * 0.75, lx - s * 0.1, -s * 0.9);
+          ctx.quadraticCurveTo(
+            lx - s * 0.05,
+            -s * 0.75,
+            lx - s * 0.1,
+            -s * 0.9,
+          );
           ctx.stroke();
           ctx.beginPath();
           ctx.moveTo(lx, s * 0.48);
@@ -380,14 +389,28 @@ export default function LobsterSwimAnimation() {
     // Initialize lobsters and particles
     const lobsters = [];
     const particles = [];
-    const minLobsterCount = 12;
+    const minLobsterCount = 6; // 减少龙虾数量从12到6
 
     for (let i = 0; i < minLobsterCount; i++) {
       lobsters.push(new Lobster());
     }
 
     let animationId;
-    const animate = () => {
+    let lastTime = performance.now();
+    const targetFPS = 30; // 限制帧率到30fps
+    const frameInterval = 1000 / targetFPS;
+
+    const animate = (currentTime) => {
+      const deltaTime = currentTime - lastTime;
+
+      // 限制帧率
+      if (deltaTime < frameInterval) {
+        animationId = requestAnimationFrame(animate);
+        return;
+      }
+
+      lastTime = currentTime - (deltaTime % frameInterval);
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Update and draw lobsters
@@ -428,7 +451,7 @@ export default function LobsterSwimAnimation() {
       animationId = requestAnimationFrame(animate);
     };
 
-    animate();
+    animate(performance.now());
 
     // Handle window resize
     const handleResize = () => {

@@ -163,41 +163,45 @@ export default function Leaderboard() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-10">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-12">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider">
                 Internal Only
               </span>
-              <h1 className="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-tight">
+              <h1 className="text-slate-900 dark:text-white text-2xl sm:text-4xl font-black leading-tight tracking-tight">
                 评审实时排行榜
               </h1>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-lg">
+            <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-lg">
               当前同步：15位评委已打分，共 {leaderboard.length} 支参赛团队
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-primary/30 text-primary font-bold hover:bg-primary/10 transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg border border-primary/30 text-primary font-bold hover:bg-primary/10 transition-all disabled:opacity-50 text-sm"
             >
               <span
-                className={`material-symbols-outlined ${isRefreshing ? "animate-spin" : ""}`}
+                className={`material-symbols-outlined text-base sm:text-xl ${isRefreshing ? "animate-spin" : ""}`}
               >
                 refresh
               </span>
-              刷新数据
+              <span className="hidden sm:inline">刷新数据</span>
+              <span className="sm:hidden">刷新</span>
             </button>
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all text-sm"
             >
-              <span className="material-symbols-outlined">download</span>
-              导出 CSV
+              <span className="material-symbols-outlined text-base sm:text-xl">
+                download
+              </span>
+              <span className="hidden sm:inline">导出 CSV</span>
+              <span className="sm:hidden">导出</span>
             </button>
           </div>
         </div>
@@ -299,21 +303,19 @@ export default function Leaderboard() {
 
         {/* Main Leaderboard Table */}
         <div className="bg-slate-900/40 border border-primary/10 rounded-2xl overflow-hidden backdrop-blur-sm">
-          <div className="p-6 border-b border-primary/10 flex items-center justify-between bg-primary/5">
-            <h3 className="text-xl font-bold">全队排名详情</h3>
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <input
-                  className="bg-background-dark/50 border border-primary/20 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-primary focus:border-primary w-64"
-                  placeholder="搜索团队或项目..."
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
-                  search
-                </span>
-              </div>
+          <div className="p-4 sm:p-6 border-b border-primary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-primary/5">
+            <h3 className="text-base sm:text-xl font-bold">全队排名详情</h3>
+            <div className="relative w-full sm:w-64">
+              <input
+                className="bg-background-dark/50 border border-primary/20 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-primary focus:border-primary w-full"
+                placeholder="搜索团队或项目..."
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                search
+              </span>
             </div>
           </div>
           <div className="overflow-x-auto">

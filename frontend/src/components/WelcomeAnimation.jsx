@@ -99,14 +99,18 @@ const SCENES = [
   },
 ];
 
-const PARTICLES = Array.from({ length: 80 }, (_, i) => ({
+// 减少粒子数量，移动端进一步减少
+const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+const PARTICLE_COUNT = isMobile ? 8 : 15;
+
+const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
   id: i,
   x: Math.random() * 100,
   y: Math.random() * 100,
-  size: 0.5 + Math.random() * 3,
-  dur: 3 + Math.random() * 5,
-  delay: Math.random() * 4,
-  opacity: 0.03 + Math.random() * 0.12,
+  size: 1 + Math.random() * 2,
+  dur: 4 + Math.random() * 4,
+  delay: Math.random() * 3,
+  opacity: 0.05 + Math.random() * 0.1,
 }));
 
 function Particles() {
@@ -121,20 +125,18 @@ function Particles() {
             top: `${p.y}%`,
             width: p.size,
             height: p.size,
-            background: `radial-gradient(circle, rgba(255,88,51,${p.opacity * 1.5}), rgba(255,160,80,${p.opacity * 0.8}))`,
-            boxShadow: `0 0 ${p.size * 2}px rgba(255,88,51,${p.opacity * 0.6})`,
+            background: `rgba(255,88,51,${p.opacity})`,
+            willChange: "transform",
           }}
           animate={{
-            y: [0, -120, 0],
-            x: [0, Math.sin(p.id) * 30, 0],
-            opacity: [p.opacity * 0.3, p.opacity * 2.5, p.opacity * 0.3],
-            scale: [0.8, 1.8, 0.6],
+            y: [0, -80, 0],
+            opacity: [p.opacity * 0.5, p.opacity * 1.5, p.opacity * 0.5],
           }}
           transition={{
             duration: p.dur,
             delay: p.delay,
             repeat: Infinity,
-            ease: "easeInOut",
+            ease: "linear",
           }}
         />
       ))}
@@ -146,33 +148,33 @@ function HeroContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
     >
       <motion.div
         className="text-6xl sm:text-8xl font-black tracking-tight text-white leading-none mb-2"
-        initial={{ y: 50, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.1, duration: 0.6 }}
       >
         {scene.title}
       </motion.div>
       <motion.div
         className="text-6xl sm:text-8xl font-black tracking-tight leading-none mb-10"
         style={{ color: "#ff5833" }}
-        initial={{ y: 50, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.2, duration: 0.6 }}
       >
         {scene.subtitle}
       </motion.div>
       <motion.p
         className="text-slate-400 text-base sm:text-xl leading-relaxed max-w-2xl"
-        initial={{ y: 30, opacity: 0 }}
+        initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.3, duration: 0.6 }}
       >
         {scene.desc}
       </motion.p>
@@ -184,16 +186,16 @@ function ContextContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center px-8"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
     >
       <motion.h2
         className="text-4xl sm:text-6xl font-black text-white mb-12 text-center"
-        initial={{ y: 50, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.1, duration: 0.6 }}
       >
         {scene.title}
       </motion.h2>
@@ -207,12 +209,11 @@ function ContextContent({ scene }) {
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(255,88,51,0.2)",
             }}
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{
-              delay: 0.3 + i * 0.15,
-              duration: 0.8,
-              ease: [0.22, 1, 0.36, 1],
+              delay: 0.2 + i * 0.1,
+              duration: 0.5,
             }}
           >
             <span
@@ -233,42 +234,42 @@ function PrizeContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
     >
       <motion.div
         className="text-6xl sm:text-8xl font-black text-white mb-4"
-        initial={{ scale: 0.7, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1, duration: 0.6 }}
       >
         ¥{scene.title}
       </motion.div>
       <motion.div
         className="text-3xl sm:text-4xl font-black mb-8"
         style={{ color: "#ff5833" }}
-        initial={{ y: 30, opacity: 0 }}
+        initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.2, duration: 0.6 }}
       >
         {scene.subtitle}
       </motion.div>
       <motion.p
         className="text-slate-400 text-lg mb-4"
-        initial={{ y: 20, opacity: 0 }}
+        initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.3, duration: 0.6 }}
       >
         {scene.desc}
       </motion.p>
       <motion.p
         className="font-bold text-base"
         style={{ color: "#ff5833" }}
-        initial={{ y: 20, opacity: 0 }}
+        initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.8, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.4, duration: 0.6 }}
       >
         {scene.accent}
       </motion.p>
@@ -280,16 +281,16 @@ function WhyContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center px-8"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
     >
       <motion.h2
         className="text-4xl sm:text-5xl font-black text-white mb-8 text-center"
-        initial={{ y: 50, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.1, duration: 0.6 }}
       >
         {scene.title}
       </motion.h2>
@@ -303,12 +304,11 @@ function WhyContent({ scene }) {
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,88,51,0.15)",
             }}
-            initial={{ x: -50, opacity: 0 }}
+            initial={{ x: -30, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{
-              delay: 0.3 + i * 0.15,
-              duration: 0.8,
-              ease: [0.22, 1, 0.36, 1],
+              delay: 0.2 + i * 0.1,
+              duration: 0.5,
             }}
           >
             <span
@@ -331,16 +331,16 @@ function SafetyContent({ scene }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center px-6 py-12"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
     >
       <motion.h2
         className="text-3xl sm:text-4xl font-black text-white mb-2 text-center flex items-center justify-center gap-2"
-        initial={{ y: 50, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.1, duration: 0.6 }}
       >
         <span
           className="material-symbols-outlined"
@@ -361,12 +361,11 @@ function SafetyContent({ scene }) {
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,88,51,0.15)",
             }}
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{
-              delay: 0.3 + i * 0.1,
-              duration: 0.8,
-              ease: [0.22, 1, 0.36, 1],
+              delay: 0.2 + i * 0.08,
+              duration: 0.5,
             }}
           >
             <div className="flex items-center gap-2 mb-2">
@@ -389,7 +388,7 @@ function SafetyContent({ scene }) {
         className="text-slate-500 text-xs font-mono mt-8 text-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.8 }}
+        transition={{ delay: 0.6, duration: 0.6 }}
       >
         组委会将对违反上述原则的作品保留取消参赛资格的权利
       </motion.p>
@@ -401,25 +400,25 @@ function CtaContent({ scene, onEnter }) {
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
     >
       <motion.div
         className="text-6xl sm:text-8xl font-black text-white mb-6 leading-none"
-        initial={{ y: 50, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.1, duration: 0.6 }}
       >
         {scene.title}
       </motion.div>
 
       <motion.p
         className="text-slate-200 text-2xl sm:text-3xl font-bold mb-6"
-        initial={{ y: 30, opacity: 0 }}
+        initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ delay: 0.2, duration: 0.6 }}
       >
         {scene.subtitle}
       </motion.p>
@@ -430,9 +429,9 @@ function CtaContent({ scene, onEnter }) {
           background: "rgba(255,88,51,0.15)",
           border: "2px solid rgba(255,88,51,0.4)",
         }}
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.6, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
       >
         <span className="material-symbols-outlined text-primary text-lg">
           calendar_today
@@ -446,31 +445,16 @@ function CtaContent({ scene, onEnter }) {
         className="relative px-16 py-5 font-black text-xl rounded-2xl text-white overflow-hidden group"
         style={{
           background: "linear-gradient(135deg, #ff5833 0%, #ff7849 100%)",
-          boxShadow:
-            "0 8px 32px rgba(255,88,51,0.5), 0 0 80px rgba(255,88,51,0.2)",
+          boxShadow: "0 8px 32px rgba(255,88,51,0.5)",
           border: "2px solid rgba(255,88,51,0.8)",
         }}
-        initial={{ scale: 0.85, opacity: 0, y: 30 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 1, type: "spring", bounce: 0.5 }}
-        whileHover={{ scale: 1.08, y: -2 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+        whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={onEnter}
       >
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)",
-          }}
-          animate={{ x: ["-100%", "200%"] }}
-          transition={{
-            duration: 1.8,
-            delay: 1.5,
-            repeat: Infinity,
-            repeatDelay: 2,
-          }}
-        />
         <span className="relative z-10 flex items-center gap-3">
           <span className="material-symbols-outlined text-2xl">
             rocket_launch
@@ -486,7 +470,7 @@ function CtaContent({ scene, onEnter }) {
         className="text-slate-500 text-xs mt-6 font-mono"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.8 }}
+        transition={{ delay: 0.5, duration: 0.6 }}
       >
         点击按钮或按 ESC 键继续
       </motion.p>
@@ -536,50 +520,22 @@ export default function WelcomeAnimation({ onDone }) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 0.98, filter: "blur(8px)" }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
           className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden"
           style={{ background: "#0c0a09" }}
         >
-          {/* 主背景渐变 - 带平滑过渡 */}
-          <motion.div
-            className="absolute inset-0"
-            animate={{
-              background: scene.bgGradient,
-            }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-          />
-
-          {/* 额外的动态渐变层 */}
-          <motion.div
-            className="absolute inset-0"
+          {/* 主背景渐变 - 简化过渡 */}
+          <div
+            className="absolute inset-0 transition-all duration-1000 ease-in-out"
             style={{
-              background: `
-                radial-gradient(ellipse 100% 80% at 30% 40%, rgba(255,88,51,0.12) 0%, transparent 60%),
-                radial-gradient(ellipse 80% 60% at 70% 60%, rgba(255,160,80,0.08) 0%, transparent 50%)
-              `,
-            }}
-            animate={{
-              opacity: [0.4, 0.8, 0.4],
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut",
+              background: scene.bgGradient,
             }}
           />
 
           <Particles />
 
           <div className="absolute inset-0 dot-grid opacity-25 pointer-events-none" />
-
-          <div
-            className="absolute top-0 left-0 right-0 h-px pointer-events-none"
-            style={{
-              background:
-                "linear-gradient(90deg, transparent, rgba(255,88,51,0.5), transparent)",
-            }}
-          />
 
           <div
             className="absolute top-0 left-0 right-0 h-0.5"
@@ -589,7 +545,7 @@ export default function WelcomeAnimation({ onDone }) {
               className="h-full"
               initial={{ width: `${(sceneIdx / SCENES.length) * 100}%` }}
               animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.4 }}
               style={{ background: "#ff5833" }}
             />
           </div>
@@ -628,11 +584,12 @@ export default function WelcomeAnimation({ onDone }) {
               y: "50%",
             }}
             transition={{
-              duration: 1.2,
-              ease: [0.22, 1, 0.36, 1],
+              duration: 0.8,
+              ease: "easeInOut",
             }}
             style={{
               transform: "translate(-50%, -50%)",
+              willChange: "transform",
             }}
           >
             <LobsterCharacter size={140} opacity={1} />
@@ -668,9 +625,10 @@ export default function WelcomeAnimation({ onDone }) {
           <div className="relative z-10 flex flex-col items-center gap-3 pb-8">
             <div className="flex items-center gap-2">
               {SCENES.map((_, i) => (
-                <motion.div
+                <div
                   key={i}
-                  animate={{
+                  className="h-1 rounded-full transition-all duration-300"
+                  style={{
                     width: i === sceneIdx ? 28 : 8,
                     opacity: i <= sceneIdx ? 1 : 0.2,
                     backgroundColor:
@@ -680,8 +638,6 @@ export default function WelcomeAnimation({ onDone }) {
                           ? "rgba(255,88,51,0.45)"
                           : "rgba(255,255,255,0.12)",
                   }}
-                  transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-                  className="h-1 rounded-full"
                 />
               ))}
             </div>

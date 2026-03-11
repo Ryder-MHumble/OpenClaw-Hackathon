@@ -29,7 +29,7 @@ export const TRACKS = {
     emoji: "🏠",
     icon: "home_heart",
     title: "生活龙虾",
-    subtitle: "把日子过明白",
+    subtitle: "把日子过好",
     desc: "让虾规划生活、陪伴家人、让日子好一点",
     color: "text-emerald-400",
     bg: "bg-emerald-400/10",

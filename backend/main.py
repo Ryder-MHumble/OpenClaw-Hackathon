@@ -25,6 +25,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
         "https://open-claw-hackathon-lilac.vercel.app",
+        "http://43.98.254.243:3000",
+        "http://43.98.254.243",
     ],
     allow_credentials=True,
     allow_methods=["*"],

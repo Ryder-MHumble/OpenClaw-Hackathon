@@ -16,7 +16,7 @@ load_dotenv()
 
 app = FastAPI(title="OpenClaw Hackathon API")
 
-# CORS - 同时支持 Vite 默认端口(5173) 和自定义端口(3000)
+# CORS - 支持本地开发和生产环境
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -24,6 +24,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
+        "https://open-claw-hackathon-lilac.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],

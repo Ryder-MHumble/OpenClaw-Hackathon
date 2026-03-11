@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
+import apiClient from "../config/apiClient";
 import LobsterLogo from "../components/LobsterLogo";
 
 /* ── Steps ── */
@@ -76,59 +76,113 @@ function TermsModal({ open, onClose }) {
               {/* Mobile drag handle */}
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/20 sm:hidden" />
               <div className="flex items-center gap-2 pt-1 sm:pt-0">
-                <span className="material-symbols-outlined text-primary text-lg">gavel</span>
-                <h3 className="font-bold text-white text-base">参赛协议 & 安全声明</h3>
+                <span className="material-symbols-outlined text-primary text-lg">
+                  gavel
+                </span>
+                <h3 className="font-bold text-white text-base">
+                  参赛协议 & 安全声明
+                </h3>
               </div>
-              <button onClick={onClose} className="size-8 rounded-lg hover:bg-white/[0.08] flex items-center justify-center transition-colors">
-                <span className="material-symbols-outlined text-slate-400 text-xl">close</span>
+              <button
+                onClick={onClose}
+                className="size-8 rounded-lg hover:bg-white/[0.08] flex items-center justify-center transition-colors"
+              >
+                <span className="material-symbols-outlined text-slate-400 text-xl">
+                  close
+                </span>
               </button>
             </div>
             <div className="px-5 py-6 space-y-6 text-sm leading-relaxed text-slate-300">
               <section>
                 <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-base">rule</span>
+                  <span className="material-symbols-outlined text-primary text-base">
+                    rule
+                  </span>
                   参赛规则
                 </h4>
                 <ul className="space-y-1.5 text-slate-400">
-                  <li>· 所有赛道不限身份、不限年龄、不限技术背景，线上提交，无需到场。</li>
-                  <li>· 须提交 PPT（10页以内）+ 演示视频（3分钟以内），海报与链接为选填。</li>
+                  <li>
+                    ·
+                    所有赛道不限身份、不限年龄、不限技术背景，线上提交，无需到场。
+                  </li>
+                  <li>
+                    · 须提交 PPT（10页以内）+
+                    演示视频（3分钟以内），海报与链接为选填。
+                  </li>
                   <li>· 每个邮箱仅可报名一次，每位参赛者每赛道限一份作品。</li>
                   <li>· 组委会保留对违规作品取消参赛资格的权利。</li>
                 </ul>
               </section>
               <section>
                 <h4 className="text-white font-bold mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-base">security</span>
+                  <span className="material-symbols-outlined text-primary text-base">
+                    security
+                  </span>
                   安全与伦理承诺
                 </h4>
                 <div className="space-y-2.5">
                   {[
-                    { icon: "lock", title: "数据安全", desc: "不得涉及非法获取或泄露他人隐私数据。" },
-                    { icon: "verified_user", title: "合规使用", desc: "不得用于网络攻击、欺诈、虚假信息生成等违法用途。" },
-                    { icon: "visibility", title: "透明可控", desc: "鼓励展示行为边界与人类监督机制，此类作品将获评审好评。" },
-                    { icon: "copyright", title: "尊重知识产权", desc: "不得大规模抓取或复制受版权保护的内容。" },
-                    { icon: "favorite", title: "社会责任", desc: "AI 向善项目将在评审中获得额外关注。" },
+                    {
+                      icon: "lock",
+                      title: "数据安全",
+                      desc: "不得涉及非法获取或泄露他人隐私数据。",
+                    },
+                    {
+                      icon: "verified_user",
+                      title: "合规使用",
+                      desc: "不得用于网络攻击、欺诈、虚假信息生成等违法用途。",
+                    },
+                    {
+                      icon: "visibility",
+                      title: "透明可控",
+                      desc: "鼓励展示行为边界与人类监督机制，此类作品将获评审好评。",
+                    },
+                    {
+                      icon: "copyright",
+                      title: "尊重知识产权",
+                      desc: "不得大规模抓取或复制受版权保护的内容。",
+                    },
+                    {
+                      icon: "favorite",
+                      title: "社会责任",
+                      desc: "AI 向善项目将在评审中获得额外关注。",
+                    },
                   ].map((item, i) => (
-                    <div key={i} className="flex gap-3 px-3 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.05]">
-                      <span className="material-symbols-outlined text-primary/70 text-base flex-shrink-0 mt-0.5">{item.icon}</span>
-                      <span className="text-slate-400"><span className="text-white font-semibold">{item.title}：</span>{item.desc}</span>
+                    <div
+                      key={i}
+                      className="flex gap-3 px-3 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.05]"
+                    >
+                      <span className="material-symbols-outlined text-primary/70 text-base flex-shrink-0 mt-0.5">
+                        {item.icon}
+                      </span>
+                      <span className="text-slate-400">
+                        <span className="text-white font-semibold">
+                          {item.title}：
+                        </span>
+                        {item.desc}
+                      </span>
                     </div>
                   ))}
                 </div>
               </section>
               <section>
                 <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-base">privacy_tip</span>
+                  <span className="material-symbols-outlined text-primary text-base">
+                    privacy_tip
+                  </span>
                   隐私政策
                 </h4>
                 <ul className="space-y-1.5 text-slate-400">
-                  <li>· 个人信息仅用于赛事通知和奖项发放，不对外出售或滥用。</li>
+                  <li>
+                    · 个人信息仅用于赛事通知和奖项发放，不对外出售或滥用。
+                  </li>
                   <li>· 参赛者授权组委会在宣传中展示项目标题与获奖信息。</li>
                   <li>· 参赛者保留对自身作品的完整知识产权。</li>
                 </ul>
               </section>
               <p className="text-slate-600 text-xs pt-2 border-t border-white/[0.05]">
-                主办：北京中关村学院 · 中关村人工智能研究院 · AI商学院<br />
+                主办：北京中关村学院 · 中关村人工智能研究院 · AI商学院
+                <br />
                 赞助：北京中关村学院教育基金会 · 海淀区西北旺政府
               </p>
             </div>
@@ -140,10 +194,19 @@ function TermsModal({ open, onClose }) {
 }
 
 /* ── Asset URL row ── */
-function AssetUrlRow({ badge, badgeColor, placeholder, optional, value, onChange }) {
+function AssetUrlRow({
+  badge,
+  badgeColor,
+  placeholder,
+  optional,
+  value,
+  onChange,
+}) {
   return (
     <div className="flex items-center gap-0 rounded-lg border-2 border-[rgba(100,80,75,0.4)] focus-within:border-primary/50 transition-colors overflow-hidden bg-[rgba(255,255,255,0.02)]">
-      <span className={`font-mono text-xs font-bold px-3 py-3 border-r-2 border-[rgba(100,80,75,0.4)] flex-shrink-0 tracking-widest ${badgeColor}`}>
+      <span
+        className={`font-mono text-xs font-bold px-3 py-3 border-r-2 border-[rgba(100,80,75,0.4)] flex-shrink-0 tracking-widest ${badgeColor}`}
+      >
         {badge}
       </span>
       <input
@@ -153,8 +216,14 @@ function AssetUrlRow({ badge, badgeColor, placeholder, optional, value, onChange
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-      {value && <span className="flex-shrink-0 size-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50 mr-3" />}
-      {optional && !value && <span className="flex-shrink-0 font-mono text-[10px] text-slate-500 mr-3 tracking-wide hidden sm:block">opt</span>}
+      {value && (
+        <span className="flex-shrink-0 size-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50 mr-3" />
+      )}
+      {optional && !value && (
+        <span className="flex-shrink-0 font-mono text-[10px] text-slate-500 mr-3 tracking-wide hidden sm:block">
+          opt
+        </span>
+      )}
     </div>
   );
 }
@@ -187,7 +256,9 @@ function PanelHeader({ label, ready }) {
           <span className="size-2.5 rounded-full bg-slate-600/80" />
           <span className="size-2.5 rounded-full bg-slate-600/80" />
         </div>
-        <span className="font-mono text-xs text-slate-400 tracking-widest select-none font-semibold">// {label}</span>
+        <span className="font-mono text-xs text-slate-400 tracking-widest select-none font-semibold">
+          // {label}
+        </span>
       </div>
       <AnimatePresence>
         {ready && (
@@ -210,7 +281,8 @@ function MonoField({ label, required, children }) {
   return (
     <div className="space-y-2">
       <label className="font-mono text-xs text-slate-400 tracking-widest uppercase block font-semibold">
-        {label}{required && <span className="text-primary ml-1.5">*</span>}
+        {label}
+        {required && <span className="text-primary ml-1.5">*</span>}
       </label>
       {children}
     </div>
@@ -226,15 +298,19 @@ function MobileStepBar({ currentStep }) {
         const active = currentStep === step.id;
         return (
           <div key={step.id} className="flex items-center gap-2">
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all
-              ${active ? "bg-primary/15 text-primary border border-primary/30" : done ? "bg-green-500/10 text-green-500 border border-green-500/20" : "bg-white/[0.04] text-slate-600 border border-white/[0.06]"}`}>
+            <div
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all
+              ${active ? "bg-primary/15 text-primary border border-primary/30" : done ? "bg-green-500/10 text-green-500 border border-green-500/20" : "bg-white/[0.04] text-slate-600 border border-white/[0.06]"}`}
+            >
               <span className="material-symbols-outlined text-sm leading-none">
                 {done ? "check_circle" : step.icon}
               </span>
               <span>{step.label}</span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`w-4 h-px ${done ? "bg-green-500/40" : "bg-white/[0.08]"}`} />
+              <div
+                className={`w-4 h-px ${done ? "bg-green-500/40" : "bg-white/[0.08]"}`}
+              />
             )}
           </div>
         );
@@ -252,18 +328,33 @@ export default function ParticipantRegistration() {
   const [submitError, setSubmitError] = useState("");
   const [termsOpen, setTermsOpen] = useState(false);
 
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const [formData, setFormData] = useState({
-    fullName: "", email: "", organization: "", phone: "",
+    fullName: "",
+    email: "",
+    organization: "",
+    phone: "",
     track: "",
-    projectTitle: "", projectDescription: "",
-    repoUrl: "", pdfUrl: "", videoUrl: "", posterUrl: "",
+    projectTitle: "",
+    projectDescription: "",
+    repoUrl: "",
+    pdfUrl: "",
+    videoUrl: "",
+    posterUrl: "",
   });
 
   const currentStep = useMemo(() => {
-    const step1Done = formData.fullName && formData.email && formData.organization;
-    const step2Done = formData.track && formData.projectTitle && formData.projectDescription && formData.pdfUrl && formData.videoUrl;
+    const step1Done =
+      formData.fullName && formData.email && formData.organization;
+    const step2Done =
+      formData.track &&
+      formData.projectTitle &&
+      formData.projectDescription &&
+      formData.pdfUrl &&
+      formData.videoUrl;
     if (!step1Done) return 1;
     if (!step2Done) return 2;
     return 3;
@@ -279,11 +370,15 @@ export default function ParticipantRegistration() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      await axios.post("/api/participants/register", formData);
+      await apiClient.post("/api/participants/register", formData);
       setSubmitted(true);
     } catch (err) {
       const detail = err?.response?.data?.detail ?? "";
-      if (typeof detail === "string" && detail.includes("duplicate key") && detail.includes("email")) {
+      if (
+        typeof detail === "string" &&
+        detail.includes("duplicate key") &&
+        detail.includes("email")
+      ) {
         setSubmitError("该邮箱已经报名过了，每个邮箱只能报名一次。");
       } else if (detail) {
         setSubmitError("提交失败，请稍后重试。");
@@ -322,8 +417,10 @@ export default function ParticipantRegistration() {
               </p>
             )}
             <p className="text-slate-400 mb-8 leading-relaxed text-sm">
-              你的参赛资料已提交成功。组委会将在审核通过后通过邮件通知你。<br />
-              线下颁奖典礼：<span className="text-primary font-medium">2026年3月22日</span>
+              你的参赛资料已提交成功。组委会将在审核通过后通过邮件通知你。
+              <br />
+              线下颁奖典礼：
+              <span className="text-primary font-medium">2026年3月22日</span>
             </p>
             <button
               onClick={() => navigate("/")}
@@ -387,8 +484,16 @@ export default function ParticipantRegistration() {
                     <div className="flex flex-col items-center">
                       <motion.div
                         animate={{
-                          backgroundColor: done ? "#ff5833" : active ? "rgba(255,88,51,0.12)" : "transparent",
-                          borderColor: done ? "#ff5833" : active ? "#ff5833" : "#3a2a27",
+                          backgroundColor: done
+                            ? "#ff5833"
+                            : active
+                              ? "rgba(255,88,51,0.12)"
+                              : "transparent",
+                          borderColor: done
+                            ? "#ff5833"
+                            : active
+                              ? "#ff5833"
+                              : "#3a2a27",
                           scale: active ? 1.1 : 1,
                         }}
                         transition={{ duration: 0.35 }}
@@ -396,31 +501,93 @@ export default function ParticipantRegistration() {
                       >
                         <AnimatePresence mode="wait">
                           {done ? (
-                            <motion.span key="check" initial={{ scale: 0, rotate: -90, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0.5, duration: 0.4 }} className="material-symbols-outlined text-white text-lg leading-none">check</motion.span>
+                            <motion.span
+                              key="check"
+                              initial={{ scale: 0, rotate: -90, opacity: 0 }}
+                              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                              exit={{ scale: 0, opacity: 0 }}
+                              transition={{
+                                type: "spring",
+                                bounce: 0.5,
+                                duration: 0.4,
+                              }}
+                              className="material-symbols-outlined text-white text-lg leading-none"
+                            >
+                              check
+                            </motion.span>
                           ) : (
-                            <motion.span key="icon" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`material-symbols-outlined text-lg leading-none ${active ? "text-primary" : "text-slate-600"}`}>{step.icon}</motion.span>
+                            <motion.span
+                              key="icon"
+                              initial={{ scale: 0.6, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              className={`material-symbols-outlined text-lg leading-none ${active ? "text-primary" : "text-slate-600"}`}
+                            >
+                              {step.icon}
+                            </motion.span>
                           )}
                         </AnimatePresence>
                         {active && (
-                          <motion.div className="absolute inset-0 rounded-full border-2 border-primary" animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0, 0.6] }} transition={{ duration: 2, repeat: Infinity }} />
+                          <motion.div
+                            className="absolute inset-0 rounded-full border-2 border-primary"
+                            animate={{
+                              scale: [1, 1.5, 1],
+                              opacity: [0.6, 0, 0.6],
+                            }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          />
                         )}
                       </motion.div>
                       {!isLast && (
                         <div className="w-px flex-1 min-h-[40px] bg-border-dark relative overflow-hidden my-1">
-                          <motion.div className="absolute top-0 left-0 w-full bg-primary" initial={{ height: 0 }} animate={{ height: done ? "100%" : "0%" }} transition={{ duration: 0.5 }} />
+                          <motion.div
+                            className="absolute top-0 left-0 w-full bg-primary"
+                            initial={{ height: 0 }}
+                            animate={{ height: done ? "100%" : "0%" }}
+                            transition={{ duration: 0.5 }}
+                          />
                         </div>
                       )}
                     </div>
                     <div className={`pb-8 ${isLast ? "pb-0" : ""} pt-1.5`}>
-                      <motion.p animate={{ color: active ? "#ff5833" : done ? "#94a3b8" : "#475569" }} className="text-xs font-bold mb-0.5">
-                        {active ? "当前步骤" : done ? "已完成" : `步骤 ${step.id}`}
+                      <motion.p
+                        animate={{
+                          color: active
+                            ? "#ff5833"
+                            : done
+                              ? "#94a3b8"
+                              : "#475569",
+                        }}
+                        className="text-xs font-bold mb-0.5"
+                      >
+                        {active
+                          ? "当前步骤"
+                          : done
+                            ? "已完成"
+                            : `步骤 ${step.id}`}
                       </motion.p>
-                      <motion.p animate={{ color: active ? "#f1f5f9" : done ? "#64748b" : "#475569" }} className="text-sm font-semibold">
+                      <motion.p
+                        animate={{
+                          color: active
+                            ? "#f1f5f9"
+                            : done
+                              ? "#64748b"
+                              : "#475569",
+                        }}
+                        className="text-sm font-semibold"
+                      >
                         {step.label}
                       </motion.p>
                       {active && (
-                        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-xs text-slate-500 mt-1">
-                          {step.id === 1 ? "填写姓名、邮箱与机构" : step.id === 2 ? "选赛道并上传项目资料" : "确认信息后提交报名"}
+                        <motion.p
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-xs text-slate-500 mt-1"
+                        >
+                          {step.id === 1
+                            ? "填写姓名、邮箱与机构"
+                            : step.id === 2
+                              ? "选赛道并上传项目资料"
+                              : "确认信息后提交报名"}
                         </motion.p>
                       )}
                     </div>
@@ -433,10 +600,23 @@ export default function ParticipantRegistration() {
           {/* Form */}
           <div className="lg:col-span-9 space-y-4 sm:space-y-6">
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-
               {/* ── Step 1: Personal Info ── */}
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-panel rounded-2xl overflow-hidden">
-                <PanelHeader label="01_PERSONAL.INFO" ready={!!(formData.fullName && formData.email && formData.organization)} />
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="glass-panel rounded-2xl overflow-hidden"
+              >
+                <PanelHeader
+                  label="01_PERSONAL.INFO"
+                  ready={
+                    !!(
+                      formData.fullName &&
+                      formData.email &&
+                      formData.organization
+                    )
+                  }
+                />
                 <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-x-8 sm:gap-x-12 gap-y-6 sm:gap-y-8">
                   <MonoField label="name" required>
                     <input
@@ -481,17 +661,35 @@ export default function ParticipantRegistration() {
               </motion.div>
 
               {/* ── Step 2: Track + Project ── */}
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-panel rounded-2xl overflow-hidden">
-                <PanelHeader label="02_PROJECT.PROPOSAL" ready={!!(formData.track && formData.projectTitle && formData.projectDescription && formData.pdfUrl && formData.videoUrl)} />
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="glass-panel rounded-2xl overflow-hidden"
+              >
+                <PanelHeader
+                  label="02_PROJECT.PROPOSAL"
+                  ready={
+                    !!(
+                      formData.track &&
+                      formData.projectTitle &&
+                      formData.projectDescription &&
+                      formData.pdfUrl &&
+                      formData.videoUrl
+                    )
+                  }
+                />
 
                 <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
-
                   {/* Track selector */}
                   <div>
                     <label className="font-mono text-xs text-slate-400 tracking-widest uppercase block font-semibold mb-3">
-                      track.selection <span className="text-primary ml-1">*</span>
+                      track.selection{" "}
+                      <span className="text-primary ml-1">*</span>
                     </label>
-                    <p className="text-xs text-slate-500 mb-3">选择你的参赛赛道（不限身份 · 不限年龄 · 不限技术背景）</p>
+                    <p className="text-xs text-slate-500 mb-3">
+                      选择你的参赛赛道（不限身份 · 不限年龄 · 不限技术背景）
+                    </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {TRACKS.map((track) => {
                         const isSelected = formData.track === track.id;
@@ -502,9 +700,10 @@ export default function ParticipantRegistration() {
                             onClick={() => set("track", track.id)}
                             whileTap={{ scale: 0.97 }}
                             className={`relative flex flex-col p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer
-                              ${isSelected
-                                ? `${track.bg} ${track.activeBorder} shadow-lg`
-                                : `bg-white/[0.02] ${track.border} hover:bg-white/[0.04]`
+                              ${
+                                isSelected
+                                  ? `${track.bg} ${track.activeBorder} shadow-lg`
+                                  : `bg-white/[0.02] ${track.border} hover:bg-white/[0.04]`
                               }`}
                           >
                             <div className="flex items-center justify-between mb-2">
@@ -519,13 +718,19 @@ export default function ParticipantRegistration() {
                                 </motion.span>
                               )}
                             </div>
-                            <p className={`font-bold text-sm ${isSelected ? track.color : "text-slate-300"}`}>
+                            <p
+                              className={`font-bold text-sm ${isSelected ? track.color : "text-slate-300"}`}
+                            >
                               {track.title}
                             </p>
-                            <p className={`text-xs mt-0.5 ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
+                            <p
+                              className={`text-xs mt-0.5 ${isSelected ? "text-slate-300" : "text-slate-500"}`}
+                            >
                               {track.subtitle}
                             </p>
-                            <p className={`text-xs mt-2 leading-snug ${isSelected ? "text-slate-400" : "text-slate-600"}`}>
+                            <p
+                              className={`text-xs mt-2 leading-snug ${isSelected ? "text-slate-400" : "text-slate-600"}`}
+                            >
                               {track.desc}
                             </p>
                           </motion.button>
@@ -554,16 +759,23 @@ export default function ParticipantRegistration() {
                       rows={4}
                       value={formData.projectDescription}
                       required
-                      onChange={(e) => set("projectDescription", e.target.value)}
+                      onChange={(e) =>
+                        set("projectDescription", e.target.value)
+                      }
                     />
-                    <p className="text-right font-mono text-[10px] text-slate-500 mt-1">{formData.projectDescription.length} chars</p>
+                    <p className="text-right font-mono text-[10px] text-slate-500 mt-1">
+                      {formData.projectDescription.length} chars
+                    </p>
                   </MonoField>
 
                   {/* Material links */}
                   <div>
-                    <p className="font-mono text-xs text-slate-400 tracking-widest uppercase mb-1.5 font-semibold">assets.manifest</p>
+                    <p className="font-mono text-xs text-slate-400 tracking-widest uppercase mb-1.5 font-semibold">
+                      assets.manifest
+                    </p>
                     <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-                      将文件上传至 Google Drive / 腾讯文档 / 飞书 / 钉钉后粘贴分享链接
+                      将文件上传至 Google Drive / 腾讯文档 / 飞书 /
+                      钉钉后粘贴分享链接
                     </p>
                     <div className="space-y-2.5">
                       <AssetUrlRow
@@ -586,7 +798,9 @@ export default function ParticipantRegistration() {
 
                   {/* Links */}
                   <div>
-                    <p className="font-mono text-xs text-slate-400 tracking-widest uppercase mb-3 font-semibold">project.links</p>
+                    <p className="font-mono text-xs text-slate-400 tracking-widest uppercase mb-3 font-semibold">
+                      project.links
+                    </p>
                     <div className="space-y-2.5">
                       <TerminalInput
                         prefix="vid://"
@@ -612,7 +826,9 @@ export default function ParticipantRegistration() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium"
                 >
-                  <span className="material-symbols-outlined text-base flex-shrink-0">error</span>
+                  <span className="material-symbols-outlined text-base flex-shrink-0">
+                    error
+                  </span>
                   {submitError}
                 </motion.div>
               )}
@@ -625,11 +841,17 @@ export default function ParticipantRegistration() {
               >
                 {/* Selected track summary */}
                 {selectedTrack && (
-                  <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${selectedTrack.bg} border ${selectedTrack.border}`}>
+                  <div
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl ${selectedTrack.bg} border ${selectedTrack.border}`}
+                  >
                     <span className="text-xl">{selectedTrack.emoji}</span>
                     <div>
-                      <p className={`text-xs font-bold ${selectedTrack.color}`}>{selectedTrack.title}</p>
-                      <p className="text-xs text-slate-500">{selectedTrack.subtitle}</p>
+                      <p className={`text-xs font-bold ${selectedTrack.color}`}>
+                        {selectedTrack.title}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {selectedTrack.subtitle}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -647,7 +869,11 @@ export default function ParticipantRegistration() {
                   </div>
                   <span className="text-xs text-slate-400 leading-relaxed">
                     我已阅读并同意{" "}
-                    <button type="button" className="text-primary hover:underline font-medium" onClick={() => setTermsOpen(true)}>
+                    <button
+                      type="button"
+                      className="text-primary hover:underline font-medium"
+                      onClick={() => setTermsOpen(true)}
+                    >
                       《参赛协议 & 安全声明》
                     </button>
                     ，承诺遵守安全与伦理原则，并授权组委会展示本项目参赛资料。
@@ -674,9 +900,24 @@ export default function ParticipantRegistration() {
                   >
                     {submitting ? (
                       <span className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin size-4" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        <svg
+                          className="animate-spin size-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
                         </svg>
                         提交中…
                       </span>
@@ -696,10 +937,15 @@ export default function ParticipantRegistration() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2 opacity-50">
             <LobsterLogo size={20} className="text-slate-400" />
-            <span className="font-bold text-sm tracking-widest uppercase text-slate-400">北纬·龙虾大赛</span>
+            <span className="font-bold text-sm tracking-widest uppercase text-slate-400">
+              北纬·龙虾大赛
+            </span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={() => setTermsOpen(true)} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">
+            <button
+              onClick={() => setTermsOpen(true)}
+              className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
+            >
               参赛协议 & 安全声明
             </button>
             <p className="text-[10px] text-slate-600 uppercase tracking-widest">
@@ -717,13 +963,20 @@ function Header({ navigate }) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border-dark bg-background-dark/80 backdrop-blur-md px-4 sm:px-6 md:px-12 py-3 sm:py-3.5">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <button onClick={() => navigate("/")} className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity"
+        >
           <div className="size-8 sm:size-9 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/30">
             <LobsterLogo size={18} className="text-white" />
           </div>
           <div className="leading-tight">
-            <span className="text-base font-black tracking-tight">北纬·<span className="text-primary">龙虾大赛</span></span>
-            <span className="hidden sm:inline text-[10px] text-slate-600 ml-1.5 font-mono">第一届</span>
+            <span className="text-base font-black tracking-tight">
+              北纬·<span className="text-primary">龙虾大赛</span>
+            </span>
+            <span className="hidden sm:inline text-[10px] text-slate-600 ml-1.5 font-mono">
+              第一届
+            </span>
           </div>
         </button>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -736,7 +989,9 @@ function Header({ navigate }) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex rounded-full size-1.5 sm:size-2 bg-primary" />
             </span>
-            <span className="text-xs text-primary font-semibold">报名进行中</span>
+            <span className="text-xs text-primary font-semibold">
+              报名进行中
+            </span>
           </div>
         </div>
       </div>

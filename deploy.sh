@@ -191,14 +191,8 @@ server {
     listen 80;
     server_name _;
 
-    # 前端静态文件
-    root $FRONTEND_DIR/dist;
-    index index.html;
-
-    # SPA 路由支持
-    location / {
-        try_files \$uri \$uri/ /index.html;
-    }
+    # 前端静态文件（端口 3000 由 Node.js 直接提供）
+    # 此处配置用于 API 反向代理
 
     # 反向代理 API 请求到后端
     location /api/ {
@@ -209,12 +203,6 @@ server {
         proxy_set_header   X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header   Connection "";
         proxy_read_timeout 120s;
-    }
-
-    # 静态资源缓存
-    location ~* \.(js|css|png|jpg|svg|ico|woff2?)$ {
-        expires 30d;
-        add_header Cache-Control "public, immutable";
     }
 
     client_max_body_size 50M;
@@ -229,18 +217,13 @@ EOF
     success "Nginx 配置已更新并重载"
 fi
 
-# ── 完成 ──
-echo ""
 echo "════════════════════════════════════"
 echo -e "${GREEN}${BOLD}  🎉 部署完成！${RESET}"
 echo "════════════════════════════════════"
 echo -e "  后端 API   →  ${CYAN}http://<服务器IP>:8000${RESET}"
 echo -e "  API 文档   →  ${CYAN}http://<服务器IP>:8000/docs${RESET}"
-if command -v nginx >/dev/null 2>&1; then
-    echo -e "  前端页面   →  ${CYAN}http://<服务器IP>${RESET}  (via Nginx)"
-else
-    echo -e "  前端 dist  →  ${CYAN}$FRONTEND_DIR/dist${RESET}  (需手动配置 Web 服务器)"
-fi
+echo -e "  前端应用   →  ${CYAN}http://<服务器IP>:3000${RESET}  (需手动启动 Node.js)"
 echo ""
+echo -e "  启动前端服务: ${BOLD}cd $FRONTEND_DIR && npm run dev${RESET}"
 echo -e "  更新部署命令: ${BOLD}./deploy.sh --update${RESET}"
 echo "════════════════════════════════════"

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
+import apiClient from "../config/apiClient";
 import { getTrackInfo } from "../constants/tracks";
 
 // 页面内提示弹窗组件
@@ -122,8 +122,8 @@ export default function JudgeScoring() {
   const fetchParticipant = async () => {
     try {
       const [participantRes, nextRes] = await Promise.all([
-        axios.get(`/api/judges/participants/${teamId}`),
-        axios.get(`/api/judges/participants/${teamId}/next`),
+        apiClient.get(`/api/judges/participants/${teamId}`),
+        apiClient.get(`/api/judges/participants/${teamId}/next`),
       ]);
       const p = participantRes.data.data;
       setParticipant(p);
@@ -132,7 +132,7 @@ export default function JudgeScoring() {
       // 如果已评分，从排行榜视图获取已有分数
       if (p.status === "scored") {
         try {
-          const lbRes = await axios.get("/api/judges/leaderboard");
+          const lbRes = await apiClient.get("/api/judges/leaderboard");
           const entry = lbRes.data.data.find((item) => item.id === p.id);
           if (entry) {
             setExistingScore({
@@ -172,7 +172,10 @@ export default function JudgeScoring() {
       const formData = new FormData();
       formData.append("status", newStatus);
       if (comments) formData.append("comments", comments);
-      await axios.patch(`/api/judges/participants/${teamId}/status`, formData);
+      await apiClient.patch(
+        `/api/judges/participants/${teamId}/status`,
+        formData,
+      );
 
       setModal({
         show: true,
@@ -204,7 +207,7 @@ export default function JudgeScoring() {
       fd.append("participant_id", teamId);
       Object.entries(scores).forEach(([k, v]) => fd.append(k, v));
       fd.append("comments", comments);
-      await axios.post("/api/judges/score", fd);
+      await apiClient.post("/api/judges/score", fd);
 
       setModal({
         show: true,

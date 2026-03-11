@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
+import apiClient from "../config/apiClient";
 import LobsterLogo from "../components/LobsterLogo";
 
 export default function JudgeLogin() {
@@ -27,7 +27,7 @@ export default function JudgeLogin() {
     try {
       const formData = new FormData();
       formData.append("password", password);
-      const response = await axios.post("/api/judges/login", formData);
+      const response = await apiClient.post("/api/judges/login", formData);
       localStorage.setItem("judgeToken", response.data.token);
       navigate("/judge/dashboard");
     } catch (err) {

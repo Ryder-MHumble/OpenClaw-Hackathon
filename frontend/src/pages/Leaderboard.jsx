@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../config/apiClient";
 
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -21,7 +21,7 @@ export default function Leaderboard() {
   const fetchLeaderboard = async () => {
     setIsRefreshing(true);
     try {
-      const response = await axios.get("/api/judges/leaderboard");
+      const response = await apiClient.get("/api/judges/leaderboard");
       setLeaderboard(response.data.data);
     } catch (error) {
       console.error("Error:", error);

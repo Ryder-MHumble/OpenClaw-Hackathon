@@ -338,6 +338,29 @@ export default function ParticipantRegistration() {
     window.scrollTo(0, 0);
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const timelineElement = document.querySelector(".timeline-sidebar");
+      if (!timelineElement) return;
+
+      const scrollY = window.scrollY;
+      const headerHeight = 76;
+
+      if (scrollY >= headerHeight) {
+        timelineElement.style.position = "fixed";
+        timelineElement.style.top = `${headerHeight}px`;
+      } else {
+        timelineElement.style.position = "sticky";
+        timelineElement.style.top = `${headerHeight}px`;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -482,7 +505,7 @@ export default function ParticipantRegistration() {
         <section className="w-full max-w-7xl mt-6 sm:mt-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10">
           {/* Desktop sidebar */}
           <aside className="hidden lg:block lg:col-span-3">
-            <div className="sticky top-[76px] flex flex-col gap-0">
+            <div className="timeline-sidebar sticky top-[76px] flex flex-col gap-0">
               {STEPS.map((step, i) => {
                 const done = currentStep > step.id;
                 const active = currentStep === step.id;

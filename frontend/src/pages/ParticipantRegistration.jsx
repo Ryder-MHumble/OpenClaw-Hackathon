@@ -482,7 +482,7 @@ export default function ParticipantRegistration() {
         <section className="w-full max-w-7xl mt-6 sm:mt-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10">
           {/* Desktop sidebar */}
           <aside className="hidden lg:block lg:col-span-3">
-            <div className="sticky top-[76px] flex flex-col gap-0">
+            <div className="sticky top-[72px] flex flex-col gap-0 z-40">
               {STEPS.map((step, i) => {
                 const done = currentStep > step.id;
                 const active = currentStep === step.id;

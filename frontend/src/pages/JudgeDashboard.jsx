@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import apiClient from "../config/apiClient";
 import { getTrackInfo } from "../constants/tracks";
+import { API_BASE_URL } from "../config/api";
 
 export default function JudgeDashboard() {
   const [participants, setParticipants] = useState([]);
@@ -374,7 +375,7 @@ export default function JudgeDashboard() {
                   <div
                     className="relative h-72 bg-cover bg-center rounded-xl overflow-hidden"
                     style={{
-                      backgroundImage: `url('/api/proxy-image?url=${encodeURIComponent(participant.cover_image)}')`,
+                      backgroundImage: `url('${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(participant.cover_image)}')`,
                     }}
                   >
                     {/* 底部渐变蒙版 */}

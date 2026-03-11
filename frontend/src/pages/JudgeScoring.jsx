@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "../config/apiClient";
 import { getTrackInfo } from "../constants/tracks";
+import { API_BASE_URL } from "../config/api";
 
 // 页面内提示弹窗组件
 function ResultModal({ show, type, title, message, onNext, onBack }) {
@@ -743,7 +744,7 @@ export default function JudgeScoring() {
                       )}
                       {!failedLoads.poster && (
                         <img
-                          src={`/api/proxy-image?url=${encodeURIComponent(participant.poster_url)}`}
+                          src={`${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(participant.poster_url)}`}
                           alt="项目海报"
                           className="max-w-full max-h-full object-contain"
                           onLoad={() =>

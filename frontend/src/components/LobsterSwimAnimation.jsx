@@ -10,6 +10,10 @@ export default function LobsterSwimAnimation() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Optimize canvas rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "low";
+
     // Set canvas size
     const setCanvasSize = () => {
       canvas.width = window.innerWidth;
@@ -17,51 +21,175 @@ export default function LobsterSwimAnimation() {
     };
     setCanvasSize();
 
-    // Lobster class
+    // Particle class for collision effects
+    class Particle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 8;
+        this.vy = (Math.random() - 0.5) * 8;
+        this.life = 20;
+        this.maxLife = 20;
+        this.size = 2 + Math.random() * 4;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.95;
+        this.vy *= 0.95;
+        this.life--;
+      }
+
+      draw(ctx) {
+        const alpha = this.life / this.maxLife;
+        ctx.fillStyle = `rgba(255, 120, 80, ${alpha * 0.8})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      isAlive() {
+        return this.life > 0;
+      }
+    }
+
+    // Lobster class with fighting system
     class Lobster {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         this.size = 15 + Math.random() * 25;
-        this.speed = 0.3 + Math.random() * 0.8;
-        this.depth = Math.random(); // 0-1, for opacity
+        this.speed = 0.5 + Math.random() * 0.7;
+        this.depth = Math.random();
         this.angle = Math.random() * Math.PI * 2;
         this.wobbleOffset = Math.random() * Math.PI * 2;
-        this.direction = Math.random() > 0.5 ? 1 : -1;
         this.changeDirTimer = 0;
-        this.changeDirInterval = 60 + Math.random() * 120;
+        this.changeDirInterval = 80 + Math.random() * 100;
+
+        // Fighting system
+        this.isFighting = false;
+        this.fightTarget = null;
+        this.fightCooldown = 0;
+        this.clawSwingAngle = 0;
+        this.clawSwingSpeed = 0;
+        this.hitFlash = 0;
+        this.shakeX = 0;
+        this.shakeY = 0;
 
         // Life cycle
         this.lifespan = 300 + Math.random() * 300;
         this.age = 0;
       }
 
-      update() {
-        // Update position with sine wave for natural swimming
+      checkCollision(other) {
+        const dx = this.x - other.x;
+        const dy = this.y - other.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const collisionRadius = (this.size + other.size) * 0.6;
+        return distance < collisionRadius;
+      }
+
+      findNearestTarget(lobsters) {
+        let nearest = null;
+        let minDist = Infinity;
+        for (const other of lobsters) {
+          if (other === this) continue;
+          const dx = this.x - other.x;
+          const dy = this.y - other.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < minDist && dist < 200) {
+            minDist = dist;
+            nearest = other;
+          }
+        }
+        return nearest;
+      }
+
+      update(lobsters) {
+        // Cooldown management
+        if (this.fightCooldown > 0) {
+          this.fightCooldown--;
+        }
+
+        // Find target for fighting
+        if (!this.isFighting && this.fightCooldown === 0 && Math.random() < 0.02) {
+          const target = this.findNearestTarget(lobsters);
+          if (target) {
+            this.isFighting = true;
+            this.fightTarget = target;
+            this.clawSwingSpeed = 0.3;
+          }
+        }
+
+        // Fighting behavior
+        let collisionEvent = null;
+        if (this.isFighting && this.fightTarget) {
+          // Check collision
+          if (this.checkCollision(this.fightTarget)) {
+            this.hitFlash = 10;
+            this.fightTarget.hitFlash = 10;
+            this.shakeX = (Math.random() - 0.5) * 4;
+            this.shakeY = (Math.random() - 0.5) * 4;
+
+            collisionEvent = {
+              x: (this.x + this.fightTarget.x) / 2,
+              y: (this.y + this.fightTarget.y) / 2,
+            };
+          }
+
+          // Move towards target
+          const dx = this.fightTarget.x - this.x;
+          const dy = this.fightTarget.y - this.y;
+          this.angle = Math.atan2(dy, dx);
+
+          // Claw swinging
+          this.clawSwingAngle += this.clawSwingSpeed;
+          if (Math.abs(this.clawSwingAngle) > 0.5) {
+            this.clawSwingSpeed *= -1;
+          }
+
+          // Random end fighting
+          if (Math.random() < 0.01) {
+            this.isFighting = false;
+            this.fightTarget = null;
+            this.fightCooldown = 60 + Math.random() * 120;
+            this.clawSwingAngle = 0;
+          }
+        }
+
+        // Normal movement
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.wobbleOffset) * this.speed * 0.5;
 
-        // Occasional direction changes
+        // Direction changes
         this.changeDirTimer++;
         if (this.changeDirTimer > this.changeDirInterval) {
           this.angle += (Math.random() - 0.5) * 0.5;
           this.changeDirTimer = 0;
-          this.changeDirInterval = 60 + Math.random() * 120;
+          this.changeDirInterval = 80 + Math.random() * 100;
         }
 
         this.wobbleOffset += 0.05;
         this.age++;
+
+        // Decay effects
+        this.shakeX *= 0.8;
+        this.shakeY *= 0.8;
+        this.hitFlash = Math.max(0, this.hitFlash - 1);
 
         // Wrap around screen
         if (this.x > canvas.width + 100) this.x = -50;
         if (this.x < -100) this.x = canvas.width + 50;
         if (this.y > canvas.height + 100) this.y = -50;
         if (this.y < -100) this.y = canvas.height + 50;
+
+        return collisionEvent;
       }
 
       draw(ctx) {
         ctx.save();
-        ctx.translate(this.x, this.y);
+        ctx.translate(this.x + this.shakeX, this.y + this.shakeY);
         ctx.rotate(this.angle);
 
         const lifeAlpha =
@@ -72,39 +200,41 @@ export default function LobsterSwimAnimation() {
               : 1;
         const baseOpacity = 0.3 + this.depth * 0.6;
         const op = baseOpacity * lifeAlpha;
-        const s = this.size; // shorthand
+        const s = this.size;
 
-        // === 与 LobsterLogo SVG 相同的横向造型 ===
-        // 坐标系：龙虾朝左游（头在-x方向），尾扇在+x方向
-        // SVG viewBox 0 0 80 60，中心约在(40,30)，这里以 s=1 对应 SVG 的 1/20
+        // Color boost when fighting or hit
+        const redBoost = this.isFighting ? 40 : 0;
+        const flashBoost = this.hitFlash * 15;
+        const colorR = Math.min(255, 255 + flashBoost);
+        const colorG = Math.min(150, 88 + redBoost);
 
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
 
-        // ── 头胸甲（主体椭圆）──
-        ctx.fillStyle = `rgba(255, 88, 51, ${op * 0.95})`;
+        // Body
+        ctx.fillStyle = `rgba(${colorR}, ${colorG}, 51, ${op * 0.95})`;
         ctx.beginPath();
         ctx.ellipse(0, 0, s * 0.8, s * 0.5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // ── 腹部节段（向右依次缩小）──
-        ctx.fillStyle = `rgba(255, 88, 51, ${op * 0.9})`;
+        // Abdomen segments
+        ctx.fillStyle = `rgba(${colorR}, ${colorG}, 51, ${op * 0.9})`;
         ctx.beginPath();
         ctx.ellipse(s * 0.8, 0, s * 0.35, s * 0.375, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = `rgba(255, 88, 51, ${op * 0.85})`;
+        ctx.fillStyle = `rgba(${colorR}, ${colorG}, 51, ${op * 0.85})`;
         ctx.beginPath();
         ctx.ellipse(s * 1.25, 0, s * 0.25, s * 0.3, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = `rgba(255, 88, 51, ${op * 0.8})`;
+        ctx.fillStyle = `rgba(${colorR}, ${colorG}, 51, ${op * 0.8})`;
         ctx.beginPath();
         ctx.ellipse(s * 1.6, 0, s * 0.175, s * 0.225, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // ── 尾扇（右端，5 片）──
-        ctx.fillStyle = `rgba(255, 88, 51, ${op * 0.75})`;
+        // Tail fan
+        ctx.fillStyle = `rgba(${colorR}, ${colorG}, 51, ${op * 0.75})`;
         const fanAngles = [-0.55, -0.28, 0, 0.28, 0.55];
         for (const fa of fanAngles) {
           ctx.beginPath();
@@ -113,23 +243,23 @@ export default function LobsterSwimAnimation() {
             s * 1.75 + Math.cos(fa) * s * 0.3,
             Math.sin(fa) * s * 0.3,
             s * 1.75 + Math.cos(fa) * s * 0.55,
-            Math.sin(fa) * s * 0.55,
+            Math.sin(fa) * s * 0.55
           );
           ctx.lineTo(
             s * 1.75 + Math.cos(fa) * s * 0.45,
-            Math.sin(fa) * s * 0.55 + Math.cos(fa) * s * 0.06,
+            Math.sin(fa) * s * 0.55 + Math.cos(fa) * s * 0.06
           );
           ctx.quadraticCurveTo(
             s * 1.75 + Math.cos(fa) * s * 0.2,
             Math.sin(fa) * s * 0.2,
             s * 1.75,
-            0,
+            0
           );
           ctx.fill();
         }
 
-        // ── 眼睛（头部左侧，上下各一）──
-        ctx.fillStyle = `rgba(255, 88, 51, ${op})`;
+        // Eyes
+        ctx.fillStyle = `rgba(${colorR}, ${colorG}, 51, ${op})`;
         ctx.beginPath();
         ctx.arc(-s * 0.65, -s * 0.3, s * 0.14, 0, Math.PI * 2);
         ctx.fill();
@@ -145,8 +275,8 @@ export default function LobsterSwimAnimation() {
         ctx.arc(-s * 0.65, s * 0.3, s * 0.065, 0, Math.PI * 2);
         ctx.fill();
 
-        // ── 触角（长，从眼部向左前方延伸）──
-        ctx.strokeStyle = `rgba(255, 100, 65, ${op * 0.8})`;
+        // Antennae
+        ctx.strokeStyle = `rgba(${colorR}, ${colorG + 20}, 80, ${op * 0.8})`;
         ctx.lineWidth = s * 0.07;
         ctx.beginPath();
         ctx.moveTo(-s * 0.62, -s * 0.3);
@@ -170,37 +300,46 @@ export default function LobsterSwimAnimation() {
         ctx.stroke();
         ctx.globalAlpha = 1;
 
-        // ── 上方大螯（claw，向左上伸出）──
-        ctx.strokeStyle = `rgba(255, 88, 51, ${op * 0.9})`;
+        // Claws with fighting animation
+        ctx.strokeStyle = `rgba(${colorR}, ${colorG}, 51, ${op * 0.9})`;
         ctx.lineWidth = s * 0.14;
+
+        // Upper claw
+        ctx.save();
+        if (this.isFighting) {
+          ctx.rotate(this.clawSwingAngle);
+        }
         ctx.beginPath();
         ctx.moveTo(-s * 0.4, -s * 0.3);
         ctx.quadraticCurveTo(-s * 0.9, -s * 0.5, -s * 1.2, -s * 0.4);
         ctx.stroke();
-        // 螯钳上叶
-        ctx.fillStyle = `rgba(255, 88, 51, ${op * 0.9})`;
+        ctx.fillStyle = `rgba(${colorR}, ${colorG}, 51, ${op * 0.9})`;
         ctx.beginPath();
         ctx.moveTo(-s * 1.2, -s * 0.4);
         ctx.lineTo(-s * 1.4, -s * 0.6);
         ctx.lineTo(-s * 1.25, -s * 0.25);
         ctx.closePath();
         ctx.fill();
-        // 螯钳下叶
         ctx.beginPath();
         ctx.moveTo(-s * 1.2, -s * 0.4);
         ctx.lineTo(-s * 1.45, -s * 0.3);
         ctx.lineTo(-s * 1.25, -s * 0.18);
         ctx.closePath();
         ctx.fill();
+        ctx.restore();
 
-        // ── 下方大螯（claw，向左下伸出）──
-        ctx.strokeStyle = `rgba(255, 88, 51, ${op * 0.9})`;
+        // Lower claw
+        ctx.save();
+        if (this.isFighting) {
+          ctx.rotate(-this.clawSwingAngle);
+        }
+        ctx.strokeStyle = `rgba(${colorR}, ${colorG}, 51, ${op * 0.9})`;
         ctx.lineWidth = s * 0.14;
         ctx.beginPath();
         ctx.moveTo(-s * 0.4, s * 0.3);
         ctx.quadraticCurveTo(-s * 0.9, s * 0.5, -s * 1.2, s * 0.4);
         ctx.stroke();
-        ctx.fillStyle = `rgba(255, 88, 51, ${op * 0.9})`;
+        ctx.fillStyle = `rgba(${colorR}, ${colorG}, 51, ${op * 0.9})`;
         ctx.beginPath();
         ctx.moveTo(-s * 1.2, s * 0.4);
         ctx.lineTo(-s * 1.4, s * 0.6);
@@ -213,23 +352,17 @@ export default function LobsterSwimAnimation() {
         ctx.lineTo(-s * 1.25, s * 0.18);
         ctx.closePath();
         ctx.fill();
+        ctx.restore();
 
-        // ── 步足（上下各 3 对，从头胸甲伸出）──
-        ctx.strokeStyle = `rgba(255, 100, 65, ${op * 0.7})`;
+        // Legs
+        ctx.strokeStyle = `rgba(${colorR}, ${colorG + 20}, 80, ${op * 0.7})`;
         ctx.lineWidth = s * 0.07;
         const legXOffsets = [-s * 0.1, s * 0.1, s * 0.3];
         for (const lx of legXOffsets) {
-          // 上侧
           ctx.beginPath();
           ctx.moveTo(lx, -s * 0.48);
-          ctx.quadraticCurveTo(
-            lx - s * 0.05,
-            -s * 0.75,
-            lx - s * 0.1,
-            -s * 0.9,
-          );
+          ctx.quadraticCurveTo(lx - s * 0.05, -s * 0.75, lx - s * 0.1, -s * 0.9);
           ctx.stroke();
-          // 下侧
           ctx.beginPath();
           ctx.moveTo(lx, s * 0.48);
           ctx.quadraticCurveTo(lx - s * 0.05, s * 0.75, lx - s * 0.1, s * 0.9);
@@ -244,24 +377,30 @@ export default function LobsterSwimAnimation() {
       }
     }
 
-    // Initialize lobsters
+    // Initialize lobsters and particles
     const lobsters = [];
-    const minLobsterCount = 10;
+    const particles = [];
+    const minLobsterCount = 12;
 
-    // Create initial lobsters
     for (let i = 0; i < minLobsterCount; i++) {
       lobsters.push(new Lobster());
     }
 
     let animationId;
     const animate = () => {
-      // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Update and draw lobsters
       for (let i = lobsters.length - 1; i >= 0; i--) {
         const lobster = lobsters[i];
-        lobster.update();
+        const event = lobster.update(lobsters);
+
+        // Handle collision events
+        if (event) {
+          for (let j = 0; j < 8; j++) {
+            particles.push(new Particle(event.x, event.y));
+          }
+        }
 
         if (lobster.isAlive()) {
           lobster.draw(ctx);
@@ -270,7 +409,18 @@ export default function LobsterSwimAnimation() {
         }
       }
 
-      // Spawn new lobsters if count is below target
+      // Update and draw particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const particle = particles[i];
+        particle.update();
+        if (particle.isAlive()) {
+          particle.draw(ctx);
+        } else {
+          particles.splice(i, 1);
+        }
+      }
+
+      // Spawn new lobsters
       while (lobsters.length < minLobsterCount) {
         lobsters.push(new Lobster());
       }

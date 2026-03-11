@@ -27,7 +27,11 @@ export default function JudgeLogin() {
     try {
       const formData = new FormData();
       formData.append("password", password);
-      const response = await apiClient.post("/api/judges/login", formData);
+      const response = await apiClient.post("/api/judges/login", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       localStorage.setItem("judgeToken", response.data.token);
       navigate("/judge/dashboard");
     } catch (err) {

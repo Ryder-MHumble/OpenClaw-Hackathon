@@ -27,6 +27,7 @@ app.add_middleware(
         "https://open-claw-hackathon-lilac.vercel.app",
         "http://43.98.254.243:3000",
         "http://43.98.254.243",
+        "https://claw.lab.bza.edu.cn",
     ],
     allow_credentials=True,
     allow_methods=["*"],

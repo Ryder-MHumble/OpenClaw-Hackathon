@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Trophy, Infinity, Lightbulb, Cpu } from "lucide-react";
 import LobsterCharacter from "../LobsterCharacter";
 
 /**
@@ -7,10 +8,10 @@ import LobsterCharacter from "../LobsterCharacter";
  */
 export default function WhyScene({ isActive, lobsterPos }) {
   const points = [
-    { icon: "emoji_events", text: "全网首个有规模的官方龙虾赛事" },
-    { icon: "all_inclusive", text: "人人可参与，不限身份、年龄、技术背景" },
-    { icon: "lightbulb", text: "正向叙事：一人加一虾等于一支团队" },
-    { icon: "hardware", text: "鼓励龙虾接入硬件设备，打开想象边界" },
+    { icon: Trophy, text: "全网首个有规模的官方龙虾赛事" },
+    { icon: Infinity, text: "人人可参与，不限身份、年龄、技术背景" },
+    { icon: Lightbulb, text: "正向叙事：一人加一虾等于一支团队" },
+    { icon: Cpu, text: "鼓励龙虾接入硬件设备，打开想象边界" },
   ];
 
   return (
@@ -22,7 +23,8 @@ export default function WhyScene({ isActive, lobsterPos }) {
         animate={{ opacity: isActive ? 1 : 0 }}
         transition={{ duration: 0.8 }}
         style={{
-          background: "radial-gradient(circle at 30% 60%, rgba(80,200,140,0.08) 0%, transparent 60%)",
+          background:
+            "radial-gradient(circle at 30% 60%, rgba(80,200,140,0.08) 0%, transparent 60%)",
         }}
       />
 
@@ -68,8 +70,8 @@ export default function WhyScene({ isActive, lobsterPos }) {
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            <motion.span
-              className="material-symbols-outlined text-xl flex-shrink-0"
+            <motion.div
+              className="flex-shrink-0"
               style={{ color: "#ff5833" }}
               initial={{ scale: 0, rotate: -20 }}
               animate={{
@@ -83,8 +85,8 @@ export default function WhyScene({ isActive, lobsterPos }) {
                 bounce: 0.5,
               }}
             >
-              {point.icon}
-            </motion.span>
+              <point.icon size={20} />
+            </motion.div>
             <span className="text-slate-200 text-sm sm:text-base font-medium leading-snug">
               {point.text}
             </span>

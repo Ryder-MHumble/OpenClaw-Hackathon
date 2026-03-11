@@ -7,6 +7,23 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
+import {
+  Gavel,
+  X,
+  FileText,
+  Shield,
+  ShieldAlert,
+  Lock,
+  ShieldCheck,
+  Eye,
+  Heart,
+  Copyright,
+  User,
+  Scale,
+  Rocket,
+  ArrowRight,
+  CheckCircle,
+} from "lucide-react";
 import LobsterLogo from "../components/LobsterLogo";
 import LobsterSwimAnimation from "../components/LobsterSwimAnimation";
 import WelcomeAnimation from "../components/WelcomeAnimation";

@@ -1,4 +1,16 @@
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Gavel,
+  X,
+  FileText,
+  Shield,
+  ShieldAlert,
+  Lock,
+  ShieldCheck,
+  Eye,
+  Heart,
+  Copyright,
+} from "lucide-react";
 
 export function TermsModal({ open, onClose }) {
   return (
@@ -23,9 +35,7 @@ export function TermsModal({ open, onClose }) {
             <div className="sticky top-0 flex items-center justify-between px-5 py-4 bg-[#141210]/95 backdrop-blur-md border-b border-white/[0.06] rounded-t-3xl sm:rounded-t-2xl">
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/20 sm:hidden" />
               <div className="flex items-center gap-2 pt-1 sm:pt-0">
-                <span className="material-symbols-outlined text-primary text-lg">
-                  gavel
-                </span>
+                <Gavel className="text-primary" size={18} />
                 <h3 className="font-bold text-white text-base">
                   参赛协议 & 安全声明
                 </h3>
@@ -34,17 +44,13 @@ export function TermsModal({ open, onClose }) {
                 onClick={onClose}
                 className="size-8 rounded-lg hover:bg-white/[0.08] flex items-center justify-center transition-colors"
               >
-                <span className="material-symbols-outlined text-slate-400 text-xl">
-                  close
-                </span>
+                <X className="text-slate-400" size={20} />
               </button>
             </div>
             <div className="px-5 py-6 space-y-6 text-sm leading-relaxed text-slate-300">
               <section>
                 <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-base">
-                    rule
-                  </span>
+                  <FileText className="text-primary" size={16} />
                   参赛规则
                 </h4>
                 <ul className="space-y-1.5 text-slate-400">
@@ -62,9 +68,7 @@ export function TermsModal({ open, onClose }) {
               </section>
               <section>
                 <h4 className="text-white font-bold mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-base">
-                    security
-                  </span>
+                  <Shield className="text-primary" size={16} />
                   安全与责任使用
                 </h4>
                 <div className="mb-3 px-3 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
@@ -76,27 +80,27 @@ export function TermsModal({ open, onClose }) {
                 <div className="space-y-2.5">
                   {[
                     {
-                      icon: "lock",
+                      icon: Lock,
                       title: "数据安全",
                       desc: "严禁非法获取或泄露用户隐私数据；运行环境做好权限隔离",
                     },
                     {
-                      icon: "verified_user",
+                      icon: ShieldCheck,
                       title: "合规使用",
                       desc: "不违法、不违背公序良俗，仅用可信插件",
                     },
                     {
-                      icon: "visibility",
+                      icon: Eye,
                       title: "透明可控",
                       desc: "鼓励清晰展示「虾」的行为边界与安全机制",
                     },
                     {
-                      icon: "favorite",
+                      icon: Heart,
                       title: "社会责任",
                       desc: "鼓励用「虾」创造社会价值",
                     },
                     {
-                      icon: "copyright",
+                      icon: Copyright,
                       title: "尊重知识产权",
                       desc: "生成内容须尊重原创版权。组委会保留取消违规作品资格的权利。参赛者须对作品安全负责。",
                     },
@@ -105,9 +109,10 @@ export function TermsModal({ open, onClose }) {
                       key={i}
                       className="flex gap-3 px-3 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.05]"
                     >
-                      <span className="material-symbols-outlined text-primary/70 text-base flex-shrink-0 mt-0.5">
-                        {item.icon}
-                      </span>
+                      <item.icon
+                        className="text-primary/70 flex-shrink-0 mt-0.5"
+                        size={16}
+                      />
                       <span className="text-slate-400">
                         <span className="text-white font-semibold">
                           {item.title}：
@@ -120,9 +125,7 @@ export function TermsModal({ open, onClose }) {
               </section>
               <section>
                 <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-base">
-                    privacy_tip
-                  </span>
+                  <ShieldAlert className="text-primary" size={16} />
                   隐私政策
                 </h4>
                 <ul className="space-y-1.5 text-slate-400">

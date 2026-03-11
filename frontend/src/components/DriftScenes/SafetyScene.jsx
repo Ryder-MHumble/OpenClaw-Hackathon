@@ -1,30 +1,31 @@
 import { motion } from "framer-motion";
+import { Lock, Scale, Target, BookOpen, Handshake, Shield } from "lucide-react";
 import LobsterCharacter from "../LobsterCharacter";
 
 export default function SafetyScene({ isActive, lobsterPos }) {
   const principles = [
     {
-      icon: "lock",
+      icon: Lock,
       title: "数据安全",
       desc: "严禁非法获取或泄露用户隐私数据。参赛作品不得将 OpenClaw 暴露于公网，运行环境须做好权限隔离。",
     },
     {
-      icon: "balance",
+      icon: Scale,
       title: "合规使用",
       desc: "不得用于违反法律法规及公序良俗的用途。严格管理插件来源，仅使用经可信渠道验证的扩展程序。",
     },
     {
-      icon: "target",
+      icon: Target,
       title: "透明可控",
       desc: "鼓励清晰展示虾的行为边界与安全机制。懂得有所不为、知道边界在哪里的虾，才是可靠的虾。",
     },
     {
-      icon: "library_books",
+      icon: BookOpen,
       title: "尊重知识产权",
       desc: "虾所生成的内容应充分尊重原创版权与创作者权益。",
     },
     {
-      icon: "handshake",
+      icon: Handshake,
       title: "社会责任",
       desc: "以虾助力弱势群体、提升公共服务效率的作品，将获得评审的额外关注。",
     },
@@ -38,7 +39,8 @@ export default function SafetyScene({ isActive, lobsterPos }) {
         animate={{ opacity: isActive ? 1 : 0 }}
         transition={{ duration: 0.8 }}
         style={{
-          background: "radial-gradient(circle at 50% 50%, rgba(100,200,150,0.1) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(100,200,150,0.1) 0%, transparent 70%)",
         }}
       />
 
@@ -57,10 +59,10 @@ export default function SafetyScene({ isActive, lobsterPos }) {
         transition={{ duration: 0.6 }}
       >
         <div className="flex items-center justify-center gap-2 mb-3">
-          <span className="material-symbols-outlined text-3xl" style={{ color: "#ff5833" }}>
-            security
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-black text-white">安全与负责任使用</h2>
+          <Shield className="text-3xl" style={{ color: "#ff5833" }} size={30} />
+          <h2 className="text-3xl sm:text-4xl font-black text-white">
+            安全与负责任使用
+          </h2>
         </div>
         <p className="text-slate-400 text-sm">参赛作品须严格遵守以下原则</p>
       </motion.div>
@@ -103,15 +105,12 @@ export default function SafetyScene({ isActive, lobsterPos }) {
                   bounce: 0.5,
                 }}
               >
-                <span
-                  className="material-symbols-outlined text-lg"
-                  style={{ color: "#ff5833" }}
-                >
-                  {principle.icon}
-                </span>
+                <principle.icon size={18} style={{ color: "#ff5833" }} />
               </motion.div>
 
-              <h3 className="text-base font-bold text-white mb-2">{principle.title}</h3>
+              <h3 className="text-base font-bold text-white mb-2">
+                {principle.title}
+              </h3>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                 {principle.desc}
               </p>

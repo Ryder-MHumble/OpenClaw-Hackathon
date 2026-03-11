@@ -1,5 +1,11 @@
 import { motion } from "framer-motion";
-import { PanelHeader, MonoField, AssetUrlRow, TerminalInput } from "./FormInputs";
+import { CheckCircle } from "lucide-react";
+import {
+  PanelHeader,
+  MonoField,
+  AssetUrlRow,
+  TerminalInput,
+} from "./FormInputs";
 import { TRACKS } from "../../constants/registration";
 
 export function Step2ProjectProposal({ formData, set }) {
@@ -27,8 +33,7 @@ export function Step2ProjectProposal({ formData, set }) {
         {/* Track selector */}
         <div>
           <label className="font-mono text-xs text-slate-400 tracking-widest uppercase block font-semibold mb-3">
-            track.selection{" "}
-            <span className="text-primary ml-1">*</span>
+            track.selection <span className="text-primary ml-1">*</span>
           </label>
           <p className="text-xs text-slate-500 mb-3">
             选择你的参赛赛道（不限身份 · 不限年龄 · 不限技术背景）
@@ -50,17 +55,15 @@ export function Step2ProjectProposal({ formData, set }) {
                     }`}
                 >
                   <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                    <span className="text-xl sm:text-2xl">
-                      {track.emoji}
-                    </span>
+                    <span className="text-xl sm:text-2xl">{track.emoji}</span>
                     {isSelected && (
-                      <motion.span
+                      <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className={`material-symbols-outlined text-sm sm:text-base ${track.color}`}
+                        className={track.color}
                       >
-                        check_circle
-                      </motion.span>
+                        <CheckCircle size={16} className="sm:w-4 sm:h-4" />
+                      </motion.div>
                     )}
                   </div>
                   <p
@@ -104,9 +107,7 @@ export function Step2ProjectProposal({ formData, set }) {
             rows={4}
             value={formData.projectDescription}
             required
-            onChange={(e) =>
-              set("projectDescription", e.target.value)
-            }
+            onChange={(e) => set("projectDescription", e.target.value)}
           />
           <p className="text-right font-mono text-[10px] text-slate-500 mt-1">
             {formData.projectDescription.length} chars
@@ -119,8 +120,7 @@ export function Step2ProjectProposal({ formData, set }) {
             assets.manifest
           </p>
           <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-            将文件上传至 Google Drive / 腾讯文档 / 飞书 /
-            钉钉后粘贴分享链接
+            将文件上传至 Google Drive / 腾讯文档 / 飞书 / 钉钉后粘贴分享链接
           </p>
           <div className="space-y-2.5">
             <AssetUrlRow

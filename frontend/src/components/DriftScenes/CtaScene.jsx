@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Calendar, Rocket, ArrowRight } from "lucide-react";
 import LobsterCharacter from "../LobsterCharacter";
 
 /**
@@ -15,7 +16,8 @@ export default function CtaScene({ isActive, lobsterPos, onEnter }) {
         animate={{ opacity: isActive ? 1 : 0 }}
         transition={{ duration: 0.8 }}
         style={{
-          background: "radial-gradient(circle at 50% 50%, rgba(255,88,51,0.16) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(255,88,51,0.16) 0%, transparent 70%)",
         }}
       />
 
@@ -59,9 +61,7 @@ export default function CtaScene({ isActive, lobsterPos, onEnter }) {
         animate={{ opacity: isActive ? 1 : 0, scale: isActive ? 1 : 0.9 }}
         transition={{ delay: 0.9, duration: 0.6 }}
       >
-        <span className="material-symbols-outlined text-primary text-lg">
-          calendar_today
-        </span>
+        <Calendar className="text-primary" size={18} />
         <span className="font-mono text-base font-bold tracking-wide text-primary">
           2026年3月11日 — 3月22日
         </span>
@@ -77,7 +77,11 @@ export default function CtaScene({ isActive, lobsterPos, onEnter }) {
           border: "2px solid rgba(255,88,51,0.8)",
         }}
         initial={{ opacity: 0, scale: 0.85, y: 10 }}
-        animate={{ opacity: isActive ? 1 : 0, scale: isActive ? 1 : 0.85, y: isActive ? 0 : 10 }}
+        animate={{
+          opacity: isActive ? 1 : 0,
+          scale: isActive ? 1 : 0.85,
+          y: isActive ? 0 : 10,
+        }}
         transition={{ delay: 1.3, duration: 0.6, type: "spring", bounce: 0.5 }}
         whileHover={{ scale: 1.08, y: -2 }}
         whileTap={{ scale: 0.95 }}
@@ -99,13 +103,12 @@ export default function CtaScene({ isActive, lobsterPos, onEnter }) {
           }}
         />
         <span className="relative z-10 flex items-center gap-3">
-          <span className="material-symbols-outlined text-2xl">
-            rocket_launch
-          </span>
+          <Rocket size={24} />
           进入大赛
-          <span className="material-symbols-outlined text-2xl group-hover:translate-x-1 transition-transform">
-            arrow_forward
-          </span>
+          <ArrowRight
+            size={24}
+            className="group-hover:translate-x-1 transition-transform"
+          />
         </span>
       </motion.button>
 

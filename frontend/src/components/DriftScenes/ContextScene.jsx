@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Star, Users, Gavel, Building2 } from "lucide-react";
 import LobsterCharacter from "../LobsterCharacter";
 
 /**
@@ -7,10 +8,10 @@ import LobsterCharacter from "../LobsterCharacter";
  */
 export default function ContextScene({ isActive, lobsterPos }) {
   const points = [
-    { icon: "star", text: "GitHub 星标 26万", angle: 0 },
-    { icon: "groups", text: "腾讯门口千人排队装机", angle: 90 },
-    { icon: "gavel", text: "两会正在讨论它", angle: 180 },
-    { icon: "corporate_fare", text: "大厂在疯抢它", angle: 270 },
+    { icon: Star, text: "GitHub 星标 26万", angle: 0 },
+    { icon: Users, text: "腾讯门口千人排队装机", angle: 90 },
+    { icon: Gavel, text: "两会正在讨论它", angle: 180 },
+    { icon: Building2, text: "大厂在疯抢它", angle: 270 },
   ];
 
   return (
@@ -22,7 +23,8 @@ export default function ContextScene({ isActive, lobsterPos }) {
         animate={{ opacity: isActive ? 1 : 0 }}
         transition={{ duration: 0.8 }}
         style={{
-          background: "radial-gradient(circle at 70% 50%, rgba(255,160,50,0.12) 0%, transparent 60%)",
+          background:
+            "radial-gradient(circle at 70% 50%, rgba(255,160,50,0.12) 0%, transparent 60%)",
         }}
       />
 
@@ -40,7 +42,10 @@ export default function ContextScene({ isActive, lobsterPos }) {
         className="absolute top-20 font-mono text-xs tracking-[0.3em] uppercase"
         style={{ color: "rgba(255,88,51,0.7)" }}
         initial={{ opacity: 0, letterSpacing: "0.5em" }}
-        animate={{ opacity: isActive ? 1 : 0, letterSpacing: isActive ? "0.3em" : "0.5em" }}
+        animate={{
+          opacity: isActive ? 1 : 0,
+          letterSpacing: isActive ? "0.3em" : "0.5em",
+        }}
         transition={{ duration: 0.6 }}
       >
         背景
@@ -85,13 +90,14 @@ export default function ContextScene({ isActive, lobsterPos }) {
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            <span
-              className="material-symbols-outlined text-lg flex-shrink-0"
+            <point.icon
+              className="flex-shrink-0"
               style={{ color: "#ff5833" }}
-            >
-              {point.icon}
+              size={18}
+            />
+            <span className="text-slate-300 text-sm font-medium">
+              {point.text}
             </span>
-            <span className="text-slate-300 text-sm font-medium">{point.text}</span>
           </motion.div>
         );
       })}

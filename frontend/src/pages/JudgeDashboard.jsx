@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { getTrackInfo } from "../constants/tracks";
 
 export default function JudgeDashboard() {
   const [participants, setParticipants] = useState([]);
@@ -66,6 +67,7 @@ export default function JudgeDashboard() {
         project_title: p.project_title,
         status: p.status,
         organization: p.organization,
+        track: p.track,
         submitted_at: formatDate(p.created_at),
         has_pdf: !!p.pdf_url,
         has_video: !!p.video_url,
@@ -360,6 +362,7 @@ export default function JudgeDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedParticipants.map((participant, index) => {
               const badge = getStatusBadge(participant.status);
+              const trackInfo = getTrackInfo(participant.track);
               return (
                 <motion.div
                   key={participant.id}
@@ -386,6 +389,16 @@ export default function JudgeDashboard() {
                       </span>
                       {badge.text}
                     </div>
+
+                    {/* 赛道徽章 - 顶部左角 */}
+                    {trackInfo && (
+                      <div
+                        className={`absolute top-3 left-3 ${trackInfo.bg} ${trackInfo.color} text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 backdrop-blur-sm border ${trackInfo.border}`}
+                      >
+                        <span>{trackInfo.emoji}</span>
+                        <span>{trackInfo.title}</span>
+                      </div>
+                    )}
 
                     {/* 内容区域 - 底部 */}
                     <div className="absolute inset-0 flex flex-col justify-end p-5">

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { getTrackInfo } from "../constants/tracks";
 
 // 页面内提示弹窗组件
 function ResultModal({ show, type, title, message, onNext, onBack }) {
@@ -341,9 +342,27 @@ export default function JudgeScoring() {
           <div className="lg:col-span-4 flex flex-col gap-8">
             {/* 项目基本信息 */}
             <section className="glass-panel p-6 rounded-xl border border-primary/10">
-              <h1 className="text-3xl font-black mb-4 leading-tight">
+              <h1 className="text-3xl font-black mb-2 leading-tight">
                 {participant.project_title}
               </h1>
+
+              {/* 赛道徽章 */}
+              {participant.track &&
+                (() => {
+                  const trackInfo = getTrackInfo(participant.track);
+                  return trackInfo ? (
+                    <div
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${trackInfo.bg} ${trackInfo.color} border ${trackInfo.border} text-xs font-bold mb-4`}
+                    >
+                      <span>{trackInfo.emoji}</span>
+                      <span>{trackInfo.title}</span>
+                      <span className="text-[10px] opacity-60">
+                        · {trackInfo.subtitle}
+                      </span>
+                    </div>
+                  ) : null;
+                })()}
+
               <p className="text-slate-400 text-base leading-relaxed mb-6">
                 {participant.project_description}
               </p>

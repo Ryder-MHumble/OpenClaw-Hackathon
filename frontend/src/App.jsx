@@ -17,15 +17,14 @@ function App() {
       {!isMobile && <CursorClaw />}
       <Router>
         <Routes>
-          <Route path="/" element={<RoleSelection />} />
-          <Route
-            path="/participant/register"
-            element={<ParticipantRegistration />}
-          />
-          <Route path="/judge/login" element={<JudgeLogin />} />
-          <Route path="/judge/dashboard" element={<JudgeDashboard />} />
-          <Route path="/judge/scoring/:teamId" element={<JudgeScoring />} />
-          <Route path="/judge/leaderboard" element={<Leaderboard />} />
+          {/* 所有路由锁定到报名页，其余路由暂时注释 */}
+          <Route path="*" element={<ParticipantRegistration />} />
+          {/* <Route path="/" element={<RoleSelection />} /> */}
+          {/* <Route path="/participant/register" element={<ParticipantRegistration />} /> */}
+          {/* <Route path="/judge/login" element={<JudgeLogin />} /> */}
+          {/* <Route path="/judge/dashboard" element={<JudgeDashboard />} /> */}
+          {/* <Route path="/judge/scoring/:teamId" element={<JudgeScoring />} /> */}
+          {/* <Route path="/judge/leaderboard" element={<Leaderboard />} /> */}
         </Routes>
       </Router>
     </>

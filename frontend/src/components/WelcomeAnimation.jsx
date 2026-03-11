@@ -216,12 +216,6 @@ function ContextContent({ scene }) {
               duration: 0.5,
             }}
           >
-            <span
-              className="material-symbols-outlined text-lg flex-shrink-0"
-              style={{ color: "#ff5833" }}
-            >
-              {p.icon}
-            </span>
             <span className="text-slate-300 text-sm font-medium">{p.text}</span>
           </motion.div>
         ))}
@@ -311,12 +305,6 @@ function WhyContent({ scene }) {
               duration: 0.5,
             }}
           >
-            <span
-              className="material-symbols-outlined text-xl flex-shrink-0"
-              style={{ color: "#ff5833" }}
-            >
-              {p.icon}
-            </span>
             <span className="text-slate-200 text-sm sm:text-base font-medium">
               {p.text}
             </span>
@@ -337,17 +325,11 @@ function SafetyContent({ scene }) {
       transition={{ duration: 0.6 }}
     >
       <motion.h2
-        className="text-3xl sm:text-4xl font-black text-white mb-2 text-center flex items-center justify-center gap-2"
+        className="text-3xl sm:text-4xl font-black text-white mb-2 text-center"
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1, duration: 0.6 }}
       >
-        <span
-          className="material-symbols-outlined"
-          style={{ color: "#ff5833" }}
-        >
-          security
-        </span>
         {scene.title}
       </motion.h2>
       <p className="text-slate-400 text-sm mb-8">参赛作品须严格遵守以下原则</p>
@@ -369,12 +351,6 @@ function SafetyContent({ scene }) {
             }}
           >
             <div className="flex items-center gap-2 mb-2">
-              <span
-                className="material-symbols-outlined text-lg"
-                style={{ color: "#ff5833" }}
-              >
-                {p.icon}
-              </span>
               <h3 className="text-base font-bold text-white">{p.title}</h3>
             </div>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -433,9 +409,6 @@ function CtaContent({ scene, onEnter }) {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.6 }}
       >
-        <span className="material-symbols-outlined text-primary text-lg">
-          calendar_today
-        </span>
         <span className="font-mono text-base font-bold tracking-wide text-primary">
           {scene.accent}
         </span>
@@ -455,15 +428,7 @@ function CtaContent({ scene, onEnter }) {
         whileTap={{ scale: 0.95 }}
         onClick={onEnter}
       >
-        <span className="relative z-10 flex items-center gap-3">
-          <span className="material-symbols-outlined text-2xl">
-            rocket_launch
-          </span>
-          进入大赛
-          <span className="material-symbols-outlined text-2xl group-hover:translate-x-1 transition-transform">
-            arrow_forward
-          </span>
-        </span>
+        <span className="relative z-10 flex items-center gap-3">进入大赛</span>
       </motion.button>
 
       <motion.p
@@ -569,12 +534,6 @@ export default function WelcomeAnimation({ onDone }) {
             }
           >
             跳过
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "0.85rem" }}
-            >
-              skip_next
-            </span>
           </motion.button>
 
           <motion.div

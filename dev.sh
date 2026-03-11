@@ -1,7 +1,7 @@
 #!/bin/bash
 # ─────────────────────────────────────────
 #  OpenClaw Hackathon — 本地开发启动脚本
-#  用法: ./dev.sh
+#  用法: ./dev.sh [stop]
 # ─────────────────────────────────────────
 set -e
 
@@ -20,21 +20,57 @@ warn()    { echo -e "${YELLOW}!${RESET} $*"; }
 error()   { echo -e "${RED}✗${RESET} $*" >&2; }
 header()  { echo -e "\n${BOLD}$*${RESET}"; }
 
-# ── 清理函数（Ctrl+C 时调用）──
-cleanup() {
-    echo ""
-    header "正在停止所有服务..."
+# ── 停止所有服务 ──
+stop_all() {
+    header "🛑  停止所有服务..."
+    echo "────────────────────────────────────"
+
+    # 停止 Backend（通过 PID 文件）
     if [ -f "$BACKEND_PID_FILE" ]; then
         BPID=$(cat "$BACKEND_PID_FILE")
         if kill -0 "$BPID" 2>/dev/null; then
             kill "$BPID" && success "Backend 已停止 (PID: $BPID)"
+        else
+            warn "Backend 进程 (PID: $BPID) 已不存在"
         fi
         rm -f "$BACKEND_PID_FILE"
+    else
+        # 兜底：按端口杀进程
+        BPID=$(lsof -ti :8000 -sTCP:LISTEN 2>/dev/null || true)
+        if [ -n "$BPID" ]; then
+            kill "$BPID" && success "Backend 已停止 (PID: $BPID)"
+        else
+            warn "Backend 未在运行"
+        fi
     fi
-    # 停止 tmux 中的前端（如果存在）
-    tmux kill-session -t openclaw-dev 2>/dev/null && success "Frontend 已停止" || true
+
+    # 停止 Frontend（tmux session）
+    if tmux has-session -t openclaw-dev 2>/dev/null; then
+        tmux kill-session -t openclaw-dev && success "Frontend 已停止 (tmux: openclaw-dev)"
+    else
+        # 兜底：按端口杀进程
+        FPID=$(lsof -ti :3000 -sTCP:LISTEN 2>/dev/null || true)
+        if [ -n "$FPID" ]; then
+            kill "$FPID" && success "Frontend 已停止 (PID: $FPID)"
+        else
+            warn "Frontend 未在运行"
+        fi
+    fi
+
+    echo "────────────────────────────────────"
+    success "所有服务已关闭。"
+}
+
+# ── 处理 stop 子命令 ──
+if [ "${1}" = "stop" ]; then
+    stop_all
+    exit 0
+fi
+
+# ── 清理函数（Ctrl+C 时调用）──
+cleanup() {
     echo ""
-    success "所有服务已关闭。再见！"
+    stop_all
     exit 0
 }
 trap cleanup SIGINT SIGTERM
@@ -115,7 +151,7 @@ echo ""
 echo -e "${BOLD}🔐 评委入口${RESET}"
 echo -e "   http://localhost:3000/judge/login"
 echo ""
-echo "按 Ctrl+C 停止所有服务"
+echo "按 Ctrl+C 或运行 ./dev.sh stop 停止所有服务"
 echo "────────────────────────────────────"
 
 # 等待（保持脚本前台运行以响应 Ctrl+C）

@@ -1,14 +1,34 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  User,
+  FolderOpen,
+  CheckCircle,
+  GraduationCap,
+  Zap,
+  Home,
+  Lock,
+  ShieldCheck,
+  Eye,
+  Heart,
+  Copyright,
+  Check,
+  Gavel,
+  Info,
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Rocket,
+} from "lucide-react";
 import apiClient from "../config/apiClient";
 import LobsterLogo from "../components/LobsterLogo";
 
 /* ── Steps ── */
 const STEPS = [
-  { id: 1, label: "个人信息", icon: "person" },
-  { id: 2, label: "赛道 & 项目", icon: "folder_open" },
-  { id: 3, label: "提交确认", icon: "check_circle" },
+  { id: 1, label: "个人信息", icon: User },
+  { id: 2, label: "赛道 & 项目", icon: FolderOpen },
+  { id: 3, label: "提交确认", icon: CheckCircle },
 ];
 
 /* ── Track definitions ── */
@@ -16,7 +36,7 @@ const TRACKS = [
   {
     id: "academic",
     emoji: "🎓",
-    icon: "school",
+    icon: GraduationCap,
     title: "学术龙虾",
     subtitle: "做科研的最强搭档",
     desc: "让虾帮你读文献、跑分析、写综述",
@@ -28,7 +48,7 @@ const TRACKS = [
   {
     id: "productivity",
     emoji: "⚡",
-    icon: "bolt",
+    icon: Zap,
     title: "生产力龙虾",
     subtitle: "一人成军的效率引擎",
     desc: "让虾管理项目、自动化流程、组建虚拟团队",
@@ -40,7 +60,7 @@ const TRACKS = [
   {
     id: "life",
     emoji: "🏠",
-    icon: "home_heart",
+    icon: Home,
     title: "生活龙虾",
     subtitle: "把日子过好",
     desc: "让虾规划生活、陪伴家人、让日子好一点",
@@ -129,38 +149,39 @@ function TermsModal({ open, onClose }) {
                 <div className="space-y-2.5">
                   {[
                     {
-                      icon: "lock",
+                      icon: Lock,
                       title: "数据安全",
-                      desc: "严禁非法获取或泄露用户隐私数据；参赛作品不得将 OpenClaw 暴露于公网，运行环境须做好权限隔离。",
+                      desc: "严禁非法获取或泄露用户隐私数据；运行环境做好权限隔离",
                     },
                     {
-                      icon: "verified_user",
+                      icon: ShieldCheck,
                       title: "合规使用",
-                      desc: "不得用于违反法律法规及公序良俗的用途；严格管理插件来源，仅使用经可信渠道验证的扩展程序。",
+                      desc: "不违法、不违背公序良俗，仅用可信插件",
                     },
                     {
-                      icon: "visibility",
+                      icon: Eye,
                       title: "透明可控",
-                      desc: "鼓励清晰展示「虾」的行为边界与安全机制。懂得有所不为、知道边界在哪里的「虾」，才是可靠的「虾」。",
+                      desc: "鼓励清晰展示「虾」的行为边界与安全机制",
                     },
                     {
-                      icon: "copyright",
-                      title: "尊重知识产权",
-                      desc: "「虾」所生成的内容，应充分尊重原创版权与创作者权益。",
-                    },
-                    {
-                      icon: "favorite",
+                      icon: Heart,
                       title: "社会责任",
-                      desc: "以「虾」助力弱势群体、提升公共服务效率的作品，将获得评审的额外关注。",
+                      desc: "鼓励用「虾」创造社会价值",
+                    },
+                    {
+                      icon: Copyright,
+                      title: "尊重知识产权",
+                      desc: "生成内容须尊重原创版权。组委会保留取消违规作品资格的权利。参赛者须对作品安全负责。",
                     },
                   ].map((item, i) => (
                     <div
                       key={i}
                       className="flex gap-3 px-3 py-2.5 rounded-lg bg-white/[0.03] border border-white/[0.05]"
                     >
-                      <span className="material-symbols-outlined text-primary/70 text-base flex-shrink-0 mt-0.5">
-                        {item.icon}
-                      </span>
+                      <item.icon
+                        className="text-primary/70 flex-shrink-0 mt-0.5"
+                        size={16}
+                      />
                       <span className="text-slate-400">
                         <span className="text-white font-semibold">
                           {item.title}：
@@ -522,7 +543,7 @@ export default function ParticipantRegistration() {
                       >
                         <AnimatePresence mode="wait">
                           {done ? (
-                            <motion.span
+                            <motion.div
                               key="check"
                               initial={{ scale: 0, rotate: -90, opacity: 0 }}
                               animate={{ scale: 1, rotate: 0, opacity: 1 }}
@@ -532,19 +553,21 @@ export default function ParticipantRegistration() {
                                 bounce: 0.5,
                                 duration: 0.4,
                               }}
-                              className="material-symbols-outlined text-white text-lg leading-none"
+                              className="text-white"
                             >
-                              check
-                            </motion.span>
+                              <Check size={18} />
+                            </motion.div>
                           ) : (
-                            <motion.span
+                            <motion.div
                               key="icon"
                               initial={{ scale: 0.6, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
-                              className={`material-symbols-outlined text-lg leading-none ${active ? "text-primary" : "text-slate-600"}`}
+                              className={
+                                active ? "text-primary" : "text-slate-600"
+                              }
                             >
-                              {step.icon}
-                            </motion.span>
+                              <step.icon size={18} />
+                            </motion.div>
                           )}
                         </AnimatePresence>
                         {active && (
@@ -849,9 +872,6 @@ export default function ParticipantRegistration() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium"
                 >
-                  <span className="material-symbols-outlined text-base flex-shrink-0">
-                    error
-                  </span>
                   {submitError}
                 </motion.div>
               )}
@@ -884,9 +904,6 @@ export default function ParticipantRegistration() {
                   <div className="p-5 sm:p-6 space-y-4">
                     {/* Warning banner */}
                     <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-500/15 border border-amber-500/40">
-                      <span className="material-symbols-outlined text-amber-400 text-xl flex-shrink-0 mt-0.5">
-                        warning
-                      </span>
                       <div className="flex-1">
                         <p className="text-amber-200 text-sm font-bold mb-1">
                           安全与责任使用声明
@@ -916,9 +933,6 @@ export default function ParticipantRegistration() {
                             className="inline-flex items-center gap-0.5 sm:gap-1 text-primary hover:text-primary/80 font-bold underline decoration-2 underline-offset-2 transition-colors"
                             onClick={() => setTermsOpen(true)}
                           >
-                            <span className="material-symbols-outlined text-sm sm:text-base">
-                              gavel
-                            </span>
                             《参赛协议 & 安全声明》
                           </button>
                         </p>
@@ -937,12 +951,7 @@ export default function ParticipantRegistration() {
                     onClick={() => navigate("/")}
                     className="order-2 sm:order-1 flex-shrink-0 px-5 sm:px-8 py-3 sm:py-4 border-2 border-slate-600 rounded-xl text-slate-300 font-bold hover:bg-slate-800 hover:border-slate-500 transition-all text-xs sm:text-sm"
                   >
-                    <span className="flex items-center justify-center gap-1.5 sm:gap-2">
-                      <span className="material-symbols-outlined text-base sm:text-lg">
-                        arrow_back
-                      </span>
-                      返回首页
-                    </span>
+                    返回首页
                   </button>
                   <motion.button
                     type="submit"
@@ -1001,13 +1010,7 @@ export default function ParticipantRegistration() {
                       </span>
                     ) : (
                       <span className="flex items-center justify-center gap-2 relative z-10">
-                        <span className="material-symbols-outlined text-xl">
-                          rocket_launch
-                        </span>
                         提交参赛作品
-                        <span className="material-symbols-outlined text-xl">
-                          arrow_forward
-                        </span>
                       </span>
                     )}
                   </motion.button>
@@ -1018,11 +1021,8 @@ export default function ParticipantRegistration() {
                   <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-xs text-amber-400/80 text-center flex items-center justify-center gap-1.5"
+                    className="text-xs text-amber-400/80 text-center"
                   >
-                    <span className="material-symbols-outlined text-sm">
-                      info
-                    </span>
                     请先阅读并同意参赛协议后再提交
                   </motion.p>
                 )}
@@ -1081,7 +1081,6 @@ function Header({ navigate }) {
         </button>
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden sm:flex items-center gap-1.5 text-slate-600 text-xs">
-            <span className="material-symbols-outlined text-sm">schedule</span>
             <span>截止 3月19日</span>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-primary/10 rounded-full border border-primary/20">

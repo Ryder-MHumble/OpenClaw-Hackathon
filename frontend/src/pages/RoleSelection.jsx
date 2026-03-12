@@ -424,11 +424,19 @@ export default function RoleSelection() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
 
-  // Determine if welcome animation should show
+  // Determine if welcome animation should show; if already seen, skip to register
   useEffect(() => {
     const seen = localStorage.getItem("lobster_welcome_seen");
-    if (!seen) setShowWelcome(true);
-  }, []);
+    if (!seen) {
+      setShowWelcome(true);
+    } else {
+      navigate("/participant/register", { replace: true });
+    }
+  }, [navigate]);
+
+  const handleAnimationDone = () => {
+    navigate("/participant/register");
+  };
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -498,11 +506,12 @@ export default function RoleSelection() {
     { phase: "颁奖典礼", date: "3月22日", icon: "emoji_events", active: false },
   ];
 
+  if (showWelcome) {
+    return <WelcomeAnimation onDone={handleAnimationDone} />;
+  }
+
   return (
     <>
-      {/* Welcome animation overlay */}
-      {showWelcome && <WelcomeAnimation onDone={() => setShowWelcome(false)} />}
-
       {/* Terms modal */}
       <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
 
@@ -598,7 +607,7 @@ export default function RoleSelection() {
               className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] w-fit"
             >
               <span className="text-[10px] font-mono text-primary/80 tracking-[0.2em] uppercase">
-                全网首个官方龙虾赛事
+                官方举办 · 龙虾赛事
               </span>
             </motion.div>
 

@@ -116,12 +116,40 @@ export function Step2ProjectProposal({ formData, set }) {
 
         {/* Material links */}
         <div>
-          <p className="font-mono text-xs text-slate-400 tracking-widest uppercase mb-1.5 font-semibold">
+          <p className="font-mono text-xs text-slate-400 tracking-widest uppercase mb-3 font-semibold">
             assets.manifest
           </p>
-          <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-            将文件上传至 Google Drive / 腾讯文档 / 飞书 / 钉钉后粘贴分享链接
-          </p>
+
+          {/* 警示提示框 */}
+          <div className="mb-4 px-4 py-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.06]">
+            <p className="text-xs font-semibold text-amber-300 mb-1.5 flex items-center gap-1.5">
+              <span>⚠️</span> 提交前请务必确认以下两点
+            </p>
+            <ul className="space-y-1.5 text-xs text-slate-300 leading-relaxed">
+              <li className="flex items-start gap-2">
+                <span className="text-amber-400 mt-0.5 shrink-0">①</span>
+                <span>
+                  <span className="text-white font-medium">开放访问权限</span>
+                  <span className="text-slate-400">
+                    ——链接须设置为「任何人可查看」，评委无需申请权限即可直接打开
+                  </span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-amber-400 mt-0.5 shrink-0">②</span>
+                <span>
+                  <span className="text-white font-medium">长久可用</span>
+                  <span className="text-slate-400">
+                    ——链接需在大赛结束（3月22日）后至少保留 30
+                    天，过期失效将影响评审
+                  </span>
+                </span>
+              </li>
+            </ul>
+            <p className="mt-2.5 text-[11px] text-slate-500 font-mono border-t border-white/5 pt-2">
+              推荐：Google Drive · 腾讯文档 · 飞书文档 · Notion · 钉钉
+            </p>
+          </div>
           <div className="space-y-2.5">
             <AssetUrlRow
               badge="项目说明书"

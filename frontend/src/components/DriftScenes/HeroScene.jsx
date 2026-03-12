@@ -3,7 +3,7 @@ import LobsterCharacter from "../LobsterCharacter";
 
 /**
  * HeroScene - 英雄场景
- * 龙虾从左侧游入，展示"全网首个"
+ * 龙虾从左侧游入，展示开场标语
  */
 export default function HeroScene({ isActive, lobsterPos, onComplete }) {
   return (
@@ -15,7 +15,8 @@ export default function HeroScene({ isActive, lobsterPos, onComplete }) {
         animate={{ opacity: isActive ? 1 : 0 }}
         transition={{ duration: 0.8 }}
         style={{
-          background: "radial-gradient(circle at 30% 50%, rgba(255,88,51,0.15) 0%, transparent 50%)",
+          background:
+            "radial-gradient(circle at 30% 50%, rgba(255,88,51,0.15) 0%, transparent 50%)",
         }}
       />
 
@@ -36,13 +37,16 @@ export default function HeroScene({ isActive, lobsterPos, onComplete }) {
         transition={{ delay: 0.3, duration: 0.8 }}
       >
         <div className="text-6xl sm:text-8xl font-black tracking-tight text-white leading-none mb-2">
-          全网首个。
+          官方举办。
         </div>
-        <div className="text-6xl sm:text-8xl font-black tracking-tight leading-none mb-10" style={{ color: "#ff5833" }}>
-          没有之二。
+        <div
+          className="text-6xl sm:text-8xl font-black tracking-tight leading-none mb-10"
+          style={{ color: "#ff5833" }}
+        >
+          有规模。
         </div>
         <p className="text-slate-400 text-base sm:text-xl leading-relaxed">
-          目前全国没有任何一场有规模的官方龙虾赛事。
+          国内首场有规模的官方 Claude 龙虾赛事，正式开赛。
         </p>
       </motion.div>
     </div>

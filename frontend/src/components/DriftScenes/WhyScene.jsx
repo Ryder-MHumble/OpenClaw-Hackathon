@@ -8,7 +8,7 @@ import LobsterCharacter from "../LobsterCharacter";
  */
 export default function WhyScene({ isActive, lobsterPos }) {
   const points = [
-    { icon: Trophy, text: "全网首个有规模的官方龙虾赛事" },
+    { icon: Trophy, text: "官方举办的有规模龙虾赛事" },
     { icon: Infinity, text: "人人可参与，不限身份、年龄、技术背景" },
     { icon: Lightbulb, text: "正向叙事：一人加一虾等于一支团队" },
     { icon: Cpu, text: "鼓励龙虾接入硬件设备，打开想象边界" },

@@ -324,6 +324,7 @@ export default function JudgeDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.06 }}
                   className="rounded-2xl overflow-hidden group cursor-pointer border border-white/[0.06] hover:border-white/[0.12] transition-all duration-300"
+                  onClick={() => navigate(`/judge/scoring/${participant.id}`)}
                 >
                   <div
                     className="relative h-64 bg-cover bg-center"
@@ -379,7 +380,10 @@ export default function JudgeDashboard() {
                         >
                           查看详情
                         </button>
-                        <button className="px-3 bg-white/[0.08] hover:bg-white/15 rounded-lg text-white hover:text-primary transition-all duration-200">
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-3 bg-white/[0.08] hover:bg-white/15 rounded-lg text-white hover:text-primary transition-all duration-200"
+                        >
                           <MoreHorizontal size={15} />
                         </button>
                       </div>

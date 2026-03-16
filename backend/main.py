@@ -1,8 +1,13 @@
-from fastapi import FastAPI, Form, HTTPException, Depends
+from fastapi import FastAPI, Form, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from typing import Optional, List
 import os
+import re
+import smtplib
+import asyncio
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from datetime import datetime, timedelta
@@ -50,6 +55,13 @@ JUDGE_PASSWORD = os.getenv("JUDGE_PASSWORD", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "minimax/minimax-m2.5")
 
+# SMTP
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.163.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "465"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+SMTP_FROM = os.getenv("SMTP_FROM", "")
+
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(hours=24)
@@ -70,12 +82,180 @@ class RegisterRequest(BaseModel):
     videoUrl: Optional[str] = None
     posterUrl: Optional[str] = None
 
+# ── URL 校验工具 ──────────────────────────────────────────────
+_BLOCKED = [
+    (re.compile(r"github\.com/[^/]+/[^/]+/(blob|tree)/"),
+     "GitHub 文件预览链接无法直接访问，请使用仓库主页链接（去掉 /blob/... 部分）或确认仓库已设为 Public"),
+]
+_WARNINGS = [
+    (re.compile(r"feishu\.cn|larksuite\.com"),
+     "飞书文档请确保已开启「互联网上获得链接的人可查看」权限"),
+    (re.compile(r"alidocs\.dingtalk\.com"),
+     "钉钉文档请确保已开启「所有人可查看」分享权限"),
+    (re.compile(r"notion\.so"),
+     "Notion 页面请确保已在 Share 设置中开启「Share to web」"),
+    (re.compile(r"docs\.qq\.com"),
+     "腾讯文档请确保已设置为「任何人可查看」"),
+    (re.compile(r"drive\.google\.com"),
+     "Google Drive 请确保共享设置为「任何知道链接的人均可查看」"),
+]
+
+_FIELD_LABELS = {
+    "pdfUrl":    "项目说明书",
+    "posterUrl": "项目海报",
+    "videoUrl":  "演示视频",
+    "repoUrl":   "代码仓库",
+    "demoUrl":   "Demo 演示",
+}
+
+def validate_url(url: Optional[str], field_name: str) -> Optional[dict]:
+    """返回 None 表示没有问题，否则返回 {"level": "error"|"warning", "field": ..., "message": ...}"""
+    if not url:
+        return None
+    for pattern, msg in _BLOCKED:
+        if pattern.search(url):
+            return {"level": "error", "field": field_name, "message": msg}
+    for pattern, msg in _WARNINGS:
+        if pattern.search(url):
+            return {"level": "warning", "field": field_name, "message": msg}
+    return None
+
+
+async def _check_accessibility(url: str) -> Optional[str]:
+    """HTTP HEAD 检测 URL 是否可访问，返回错误描述或 None（正常）"""
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (compatible; OpenClaw-Auditor/1.0)"}
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            resp = await client.head(url, headers=headers)
+            if resp.status_code in (405, 501):
+                resp = await client.get(url, headers=headers)
+            if resp.status_code >= 400:
+                return f"链接返回错误状态码 {resp.status_code}（可能需要登录或链接已失效）"
+        return None
+    except httpx.TimeoutException:
+        return "链接请求超时（可能无法访问）"
+    except Exception as e:
+        return f"链接无法访问：{e}"
+
+
+async def _audit_and_notify(name: str, email: str, project_title: str,
+                             url_fields: dict[str, str]):
+    """后台任务：并发检测所有 URL，有问题则发邮件提醒"""
+    # 并发检测所有 URL
+    check_tasks = {field: url for field, url in url_fields.items() if url}
+    results = await asyncio.gather(
+        *[_check_accessibility(url) for url in check_tasks.values()],
+        return_exceptions=True,
+    )
+
+    field_issues: dict[str, list[str]] = {}
+    for (field, url), err in zip(check_tasks.items(), results):
+        problems = []
+        # 模式匹配问题
+        pattern_issue = validate_url(url, field)
+        if pattern_issue:
+            problems.append(pattern_issue["message"])
+        # HTTP 可访问性问题
+        if isinstance(err, str):
+            problems.append(err)
+        if problems:
+            field_issues[field] = {"url": url, "problems": problems}
+
+    if not field_issues or not SMTP_USER:
+        return
+
+    # 构建邮件
+    lines = [
+        f"{name} 你好！",
+        "",
+        "我是 OpenClaw AI 黑客松组委会，感谢你报名参赛！",
+        "",
+        "我们在审核你的参赛材料时，发现以下链接存在访问问题，",
+        "评委目前无法正常打开这些内容，可能影响你的参赛资格和评审结果。",
+        "",
+        "──── 问题链接明细 ────────────────────────",
+    ]
+    for field, info in field_issues.items():
+        label = _FIELD_LABELS.get(field, field)
+        lines.append(f"\n【{label}】")
+        lines.append(f"  当前链接：{info['url']}")
+        for p in info["problems"]:
+            lines.append(f"  问题：{p}")
+    lines += [
+        "",
+        "──── 如何修复 ────────────────────────────",
+        "",
+        "第一步：确认链接可以被任何人访问",
+        "  · 飞书/钉钉/腾讯文档：分享设置中开启「任何人可查看」",
+        "  · Google Drive：共享设置改为「知道链接的人均可查看」",
+        "  · GitHub：确认仓库为 Public，并使用仓库主页链接",
+        "    （正确示例：https://github.com/用户名/仓库名）",
+        "    （错误示例：https://github.com/用户名/仓库名/blob/main/README.md）",
+        "",
+        "第二步：直接回复本邮件",
+        "  请在回复中注明修正后的链接，格式如下：",
+        "",
+        "  项目说明书：<新链接>",
+        "  项目海报：<新链接>",
+        "  演示视频：<新链接>",
+        "  （只需提供有问题的链接，没问题的无需重复填写）",
+        "",
+        "  组委会收到后会在 1 个工作日内为你更新。",
+        "",
+        "──────────────────────────────────────────",
+        "",
+        "⚠ 请在 3月21日 24:00 前完成修复，逾期将影响评审。",
+        "",
+        "如有任何疑问，直接回复本邮件即可，我们会尽快回复。",
+        "",
+        "祝参赛顺利！",
+        "OpenClaw AI 黑客松组委会",
+        f"（系统检测时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}）",
+    ]
+
+    subject = f"【OpenClaw 黑客松】你的参赛材料链接需要修复 — {project_title}"
+    body = "\n".join(lines)
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = SMTP_FROM or SMTP_USER
+        msg["To"] = email
+        msg.attach(MIMEText(body, "plain", "utf-8"))
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_FROM or SMTP_USER, [email], msg.as_string())
+    except Exception as e:
+        print(f"[URL audit] 邮件发送失败 ({email}): {e}")
+
+
 @app.get("/")
 async def root():
     return {"message": "OpenClaw Hackathon API", "status": "running"}
 
 @app.post("/api/participants/register")
-async def register_participant(body: RegisterRequest):
+async def register_participant(body: RegisterRequest, background_tasks: BackgroundTasks):
+    # URL 格式 / 可访问性检查（拦截明确有问题的链接）
+    url_issues = []
+    for field, value in [
+        ("pdfUrl", body.pdfUrl),
+        ("posterUrl", body.posterUrl),
+        ("videoUrl", body.videoUrl),
+        ("repoUrl", body.repoUrl),
+        ("demoUrl", body.demoUrl),
+    ]:
+        issue = validate_url(value, field)
+        if issue:
+            url_issues.append(issue)
+
+    errors = [i for i in url_issues if i["level"] == "error"]
+    if errors:
+        raise HTTPException(
+            status_code=422,
+            detail={"url_errors": errors,
+                    "message": "提交的链接存在问题，请修正后重新提交"}
+        )
+
     try:
         data = {
             "full_name": body.fullName,
@@ -95,8 +275,30 @@ async def register_participant(body: RegisterRequest):
 
         result = supabase.table("participants").insert(data).execute()
 
-        return {"message": "Registration successful", "data": result.data}
+        # 注册成功后，后台异步检测所有 URL，有问题自动发邮件
+        background_tasks.add_task(
+            _audit_and_notify,
+            name=body.fullName,
+            email=body.email,
+            project_title=body.projectTitle,
+            url_fields={
+                "pdfUrl":    body.pdfUrl,
+                "posterUrl": body.posterUrl,
+                "videoUrl":  body.videoUrl,
+                "repoUrl":   body.repoUrl,
+                "demoUrl":   body.demoUrl,
+            },
+        )
 
+        warnings = [i for i in url_issues if i["level"] == "warning"]
+        return {
+            "message": "Registration successful",
+            "data": result.data,
+            "url_warnings": warnings if warnings else None,
+        }
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

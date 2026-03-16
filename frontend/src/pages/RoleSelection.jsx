@@ -24,7 +24,6 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
-import LobsterLogo from "../components/LobsterLogo";
 import LobsterSwimAnimation from "../components/LobsterSwimAnimation";
 import WelcomeAnimation from "../components/WelcomeAnimation";
 import ParticleWaves from "../components/ParticleWaves";
@@ -551,8 +550,12 @@ export default function RoleSelection() {
             transition={{ duration: 0.5 }}
             className="flex items-center gap-3"
           >
-            <div className="size-8 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-              <LobsterLogo size={20} className="text-white" />
+            <div className="size-8 rounded-xl overflow-hidden shadow-lg shadow-primary/30">
+              <img
+                src="/logo.png"
+                alt="logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="leading-tight">
               <span className="text-base font-black tracking-tight">

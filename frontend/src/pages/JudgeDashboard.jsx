@@ -35,6 +35,7 @@ import LobsterLogo from "../components/LobsterLogo";
 export default function JudgeDashboard() {
   const [participants, setParticipants] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [trackFilter, setTrackFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -44,6 +45,11 @@ export default function JudgeDashboard() {
     reviewing: 0,
     scored: 0,
     rejected: 0,
+  });
+  const [trackStats, setTrackStats] = useState({
+    academic: 0,
+    productivity: 0,
+    life: 0,
   });
   const [loading, setLoading] = useState(true);
   const [voteControlLoading, setVoteControlLoading] = useState(false);
@@ -56,10 +62,11 @@ export default function JudgeDashboard() {
 
   useEffect(() => {
     fetchStats();
+    fetchTrackStats();
     fetchParticipants();
     fetchSuspiciousCount();
     setCurrentPage(1);
-  }, [filter]);
+  }, [filter, trackFilter]);
 
   const fetchStats = async () => {
     try {
@@ -74,6 +81,26 @@ export default function JudgeDashboard() {
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
+    }
+  };
+
+  const fetchTrackStats = async () => {
+    try {
+      const res = await apiClient.get("/api/judges/participants/stats/tracks");
+      const data = res.data.data;
+      const stats = {
+        academic: 0,
+        productivity: 0,
+        life: 0,
+      };
+      data.forEach((item) => {
+        if (item.track in stats) {
+          stats[item.track] = item.count;
+        }
+      });
+      setTrackStats(stats);
+    } catch (error) {
+      console.error("Error fetching track stats:", error);
     }
   };
 
@@ -220,10 +247,11 @@ export default function JudgeDashboard() {
 
   const filteredParticipants = participants.filter((p) => {
     const matchesFilter = filter === "all" || p.status === filter;
+    const matchesTrack = trackFilter === "all" || p.track === trackFilter;
     const matchesSearch =
       p.project_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.organization.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesTrack && matchesSearch;
   });
 
   const totalPages = Math.ceil(filteredParticipants.length / itemsPerPage);
@@ -244,15 +272,31 @@ export default function JudgeDashboard() {
 
   const TABS = [
     { key: "all", label: "全部团队", Icon: LayoutGrid, count: stats.total },
-    { key: "pending", label: "待评审", Icon: Clock, count: stats.pending },
+    { key: "pending", label: "待初筛", Icon: Clock, count: stats.pending },
     {
       key: "reviewing",
-      label: "评审中",
+      label: "初筛通过",
       Icon: ClipboardList,
       count: stats.reviewing,
     },
-    { key: "scored", label: "已评分", Icon: Star, count: stats.scored },
     { key: "rejected", label: "已拒绝", Icon: XCircle, count: stats.rejected },
+  ];
+
+  const TRACK_TABS = [
+    { key: "all", label: "全部赛道", emoji: "🦞", count: stats.total },
+    {
+      key: "academic",
+      label: "学术龙虾",
+      emoji: "🎓",
+      count: trackStats.academic,
+    },
+    {
+      key: "productivity",
+      label: "生产力龙虾",
+      emoji: "⚡",
+      count: trackStats.productivity,
+    },
+    { key: "life", label: "生活龙虾", emoji: "🌟", count: trackStats.life },
   ];
 
   const STAT_CARDS = [
@@ -266,7 +310,7 @@ export default function JudgeDashboard() {
       borderClass: "",
     },
     {
-      label: "待评审作品",
+      label: "待初筛作品",
       value: stats.pending,
       accentClass: "text-amber-400/80",
       barClass: "bg-amber-400",
@@ -274,11 +318,11 @@ export default function JudgeDashboard() {
       borderClass: "border-l-2 border-l-amber-400/50",
     },
     {
-      label: "已评分作品",
-      value: stats.scored,
+      label: "初筛通过 (目标30个)",
+      value: stats.reviewing,
       accentClass: "text-emerald-400/80",
       barClass: "bg-emerald-400",
-      barWidth: `${stats.total > 0 ? (stats.scored / stats.total) * 100 : 0}%`,
+      barWidth: `${stats.total > 0 ? (stats.reviewing / stats.total) * 100 : 0}%`,
       borderClass: "border-l-2 border-l-emerald-400/50",
     },
     {
@@ -343,10 +387,10 @@ export default function JudgeDashboard() {
 
       <main className="flex-1 px-6 lg:px-16 py-8">
         {/* Title */}
-        <div className="flex flex-wrap justify-between items-end gap-4 mb-8">
+        <div className="flex flex-wrap justify-between items-end gap-4 mb-6">
           <div className="flex flex-col gap-1.5">
             <h1 className="text-3xl font-black tracking-tight">
-              大赛评审工作台
+              大赛初筛工作台
             </h1>
             <p className="text-primary text-sm font-medium flex items-center gap-2">
               <span className="relative flex h-1.5 w-1.5">
@@ -360,6 +404,56 @@ export default function JudgeDashboard() {
             <Download size={14} />
             导出评审报告
           </button>
+        </div>
+
+        {/* 初筛目标提示 */}
+        <div className="mb-6 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <div className="flex items-start gap-3">
+            <Trophy className="size-5 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-amber-300 mb-1">初筛目标</p>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                每个赛道需初筛通过{" "}
+                <span className="text-amber-400 font-bold">10个项目</span>，共计{" "}
+                <span className="text-amber-400 font-bold">30个项目</span>{" "}
+                进入决赛。 当前已通过：学术{" "}
+                <span className="font-mono text-amber-400">
+                  {trackStats.academic > 0
+                    ? Math.min(
+                        10,
+                        Math.floor(
+                          (stats.reviewing * trackStats.academic) / stats.total,
+                        ),
+                      )
+                    : 0}
+                </span>
+                /10 · 生产力{" "}
+                <span className="font-mono text-amber-400">
+                  {trackStats.productivity > 0
+                    ? Math.min(
+                        10,
+                        Math.floor(
+                          (stats.reviewing * trackStats.productivity) /
+                            stats.total,
+                        ),
+                      )
+                    : 0}
+                </span>
+                /10 · 生活{" "}
+                <span className="font-mono text-amber-400">
+                  {trackStats.life > 0
+                    ? Math.min(
+                        10,
+                        Math.floor(
+                          (stats.reviewing * trackStats.life) / stats.total,
+                        ),
+                      )
+                    : 0}
+                </span>
+                /10
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -464,7 +558,7 @@ export default function JudgeDashboard() {
         </div>
 
         {/* Filter Tabs */}
-        <div className="mb-7 overflow-x-auto">
+        <div className="mb-5 overflow-x-auto">
           <div className="flex border-b border-white/[0.07] gap-1 min-w-max">
             {TABS.map(({ key, label, Icon, count }) => (
               <button
@@ -480,6 +574,31 @@ export default function JudgeDashboard() {
                 {label}
                 <span
                   className={`text-xs px-1.5 py-0.5 rounded-md ${filter === key ? "bg-primary/20 text-primary" : "bg-white/5 text-slate-600"}`}
+                >
+                  {count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Track Filter Tabs */}
+        <div className="mb-7 overflow-x-auto">
+          <div className="flex gap-2 min-w-max">
+            {TRACK_TABS.map(({ key, label, emoji, count }) => (
+              <button
+                key={key}
+                onClick={() => setTrackFilter(key)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  trackFilter === key
+                    ? "bg-primary/15 border-2 border-primary/40 text-white shadow-lg shadow-primary/10"
+                    : "bg-white/[0.03] border-2 border-white/[0.06] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                }`}
+              >
+                <span className="text-base">{emoji}</span>
+                <span>{label}</span>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-md font-mono ${trackFilter === key ? "bg-primary/25 text-primary" : "bg-white/5 text-slate-600"}`}
                 >
                   {count}
                 </span>

@@ -28,8 +28,8 @@ header()  { echo -e "\n${BOLD}$*${RESET}"; }
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
-BACKEND_PID_FILE="$PROJECT_ROOT/.backend.pid"
-FRONTEND_PID_FILE="$PROJECT_ROOT/.frontend.pid"
+BACKEND_PID_FILE="$PROJECT_ROOT/.backend.prod.pid"
+FRONTEND_PID_FILE="$PROJECT_ROOT/.frontend.prod.pid"
 BACKEND_LOG="$PROJECT_ROOT/backend.log"
 FRONTEND_LOG="$PROJECT_ROOT/frontend.log"
 
@@ -75,9 +75,9 @@ stop_services() {
         rm -f "$FRONTEND_PID_FILE"
     fi
 
-    # 强制清理残留进程
-    pkill -f "uvicorn main:app" 2>/dev/null || true
-    pkill -f "serve.*dist" 2>/dev/null || true
+    # 强制清理残留进程（仅限本项目目录）
+    pkill -f "uvicorn.*openclaw-hackathon.*main:app" 2>/dev/null || true
+    pkill -f "serve.*openclaw-hackathon.*dist" 2>/dev/null || true
 
     sleep 1
     success "所有服务已停止"

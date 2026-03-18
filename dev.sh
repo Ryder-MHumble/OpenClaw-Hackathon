@@ -8,7 +8,7 @@ set -e
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_DIR="$ROOT_DIR/frontend"
-BACKEND_PID_FILE="$ROOT_DIR/.backend.pid"
+BACKEND_PID_FILE="$ROOT_DIR/.backend.local.pid"
 
 # ── 颜色输出 ──
 RED='\033[0;31m'; YELLOW='\033[1;33m'; GREEN='\033[0;32m'

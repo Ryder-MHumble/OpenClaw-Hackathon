@@ -263,9 +263,9 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
         ws = wb.active
         ws.title = "参赛者评审情况"
 
-        # 设置表头
+        # 设置表头（移除姓名和机构以保证评审公平性）
         headers = [
-            "ID", "姓名", "邮箱", "机构", "赛道", "项目标题", "项目描述",
+            "ID", "赛道", "项目标题", "项目描述",
             "Demo链接", "代码仓库", "PDF文档", "视频链接", "海报链接",
             "材料是否齐全", "是否通过", "备注信息", "提交时间"
         ]
@@ -324,9 +324,6 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
 
             row_data = [
                 p.get("id"),
-                p.get("full_name"),
-                p.get("email"),
-                p.get("organization"),
                 track_map.get(p.get("track"), p.get("track", "")),
                 p.get("project_title"),
                 p.get("project_description"),
@@ -346,7 +343,7 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
                 cell.alignment = Alignment(vertical="center", wrap_text=True)
 
         # 调整列宽
-        column_widths = [8, 12, 25, 20, 15, 30, 40, 35, 35, 35, 35, 35, 15, 12, 40, 20]
+        column_widths = [8, 15, 30, 40, 35, 35, 35, 35, 35, 15, 12, 40, 20]
         for col_num, width in enumerate(column_widths, 1):
             ws.column_dimensions[openpyxl.utils.get_column_letter(col_num)].width = width
 

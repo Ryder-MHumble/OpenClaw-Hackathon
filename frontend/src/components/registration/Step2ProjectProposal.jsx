@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle, Users } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import {
   PanelHeader,
   MonoField,
@@ -7,8 +7,6 @@ import {
   TerminalInput,
 } from "./FormInputs";
 import { TRACKS } from "../../constants/registration";
-import { useState, useEffect } from "react";
-import apiClient from "../../config/apiClient";
 
 export function Step2ProjectProposal({
   formData,
@@ -16,29 +14,6 @@ export function Step2ProjectProposal({
   urlValidations,
   setUrlValidations,
 }) {
-  const [trackStats, setTrackStats] = useState({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTrackStats = async () => {
-      try {
-        const response = await apiClient.get(
-          "/api/judges/participants/stats/tracks",
-        );
-        const stats = {};
-        response.data.data.forEach((item) => {
-          stats[item.track] = item.count;
-        });
-        setTrackStats(stats);
-      } catch (error) {
-        console.error("Failed to fetch track stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTrackStats();
-  }, []);
-
   const handleValidationChange = (field, isValid) => {
     setUrlValidations((prev) => ({ ...prev, [field]: isValid }));
   };
@@ -79,7 +54,6 @@ export function Step2ProjectProposal({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {TRACKS.map((track) => {
               const isSelected = formData.track === track.id;
-              const count = trackStats[track.id] || 0;
               return (
                 <motion.button
                   key={track.id}
@@ -120,23 +94,6 @@ export function Step2ProjectProposal({
                   >
                     {track.desc}
                   </p>
-                  {!loading && (
-                    <div
-                      className={`flex items-center gap-1 mt-2 pt-2 border-t ${isSelected ? "border-white/10" : "border-white/5"}`}
-                    >
-                      <Users
-                        size={12}
-                        className={
-                          isSelected ? "text-slate-400" : "text-slate-600"
-                        }
-                      />
-                      <span
-                        className={`text-[10px] font-mono ${isSelected ? "text-slate-400" : "text-slate-600"}`}
-                      >
-                        {count} 人已报名
-                      </span>
-                    </div>
-                  )}
                 </motion.button>
               );
             })}

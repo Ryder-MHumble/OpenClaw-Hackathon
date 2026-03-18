@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from database import supabase
 from models import RegisterRequest, UpdateStatusRequest
-from services.url_validator import validate_url, check_accessibility
+from services.url_validator import validate_url
 from services.email_service import audit_and_notify
 
 router = APIRouter()
@@ -18,9 +18,9 @@ class CheckUrlRequest(BaseModel):
 
 @router.post("/api/participants/check-url")
 async def check_url_accessibility(body: CheckUrlRequest):
-    """检查 URL 是否可访问（供前端实时校验使用）"""
+    """检查 URL 格式（仅前端格式校验，不做可访问性检查）"""
     try:
-        # 前端格式校验
+        # 仅做前端格式校验
         validation_error = validate_url(body.url, "url")
         if validation_error and validation_error.get("level") == "error":
             return {
@@ -28,17 +28,10 @@ async def check_url_accessibility(body: CheckUrlRequest):
                 "error": validation_error.get("message")
             }
 
-        # 后端可访问性检查
-        accessibility_error = await check_accessibility(body.url)
-        if accessibility_error:
-            return {
-                "accessible": False,
-                "error": accessibility_error
-            }
-
+        # 直接返回成功，不做后端可访问性检查
         return {
             "accessible": True,
-            "message": "链接可正常访问"
+            "message": "链接格式正确"
         }
     except Exception as e:
         return {

@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Loader2,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -9,7 +8,6 @@ import {
   EyeOff,
   ExternalLink,
 } from "lucide-react";
-import apiClient from "../../config/apiClient";
 import { API_BASE_URL } from "../../config/api";
 
 // URL 问题分类
@@ -120,73 +118,36 @@ export function AssetUrlRow({
   onValidationChange,
 }) {
   const [hint, setHint] = useState(null);
-  const [checking, setChecking] = useState(false);
-  const [accessible, setAccessible] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const urlType = detectUrlType(value);
 
-  // 自动展开预览：当 URL 有效且验证通过时
+  // 自动展开预览：当 URL 有效时
   useEffect(() => {
-    if (value && accessible === true && !hint) {
+    if (value && !hint) {
       setShowPreview(true);
     } else if (!value) {
       setShowPreview(false);
     }
-  }, [value, accessible, hint]);
-
-  const checkAccessibility = useCallback(async (url) => {
-    if (!url) return;
-
-    setChecking(true);
-    try {
-      const response = await apiClient.post("/api/participants/check-url", {
-        url,
-      });
-      const result = response.data;
-
-      if (result.accessible) {
-        setAccessible(true);
-        setHint(null);
-      } else {
-        setAccessible(false);
-        setHint({
-          level: "error",
-          message: result.error || "链接无法访问，请检查权限设置或链接是否有效",
-        });
-      }
-    } catch (error) {
-      // 如果后端检查失败，只做前端校验
-      const localCheck = checkUrl(url);
-      setHint(localCheck);
-      setAccessible(localCheck?.level !== "error");
-    } finally {
-      setChecking(false);
-    }
-  }, []);
+  }, [value, hint]);
 
   const handleBlur = useCallback(() => {
     const localCheck = checkUrl(value);
     setHint(localCheck);
-
-    // 如果前端校验通过，再做后端可访问性检查
-    if (!localCheck || localCheck.level !== "error") {
-      checkAccessibility(value);
-    }
-  }, [value, checkAccessibility]);
+  }, [value]);
 
   useEffect(() => {
     // 通知父组件验证状态
     if (onValidationChange) {
-      const hasError = hint?.level === "error" || accessible === false;
+      const hasError = hint?.level === "error";
       onValidationChange(!hasError);
     }
-  }, [hint, accessible, onValidationChange]);
+  }, [hint, onValidationChange]);
 
   return (
     <div className="space-y-2">
       <div
         className={`flex items-center gap-0 rounded-lg border-2 transition-colors overflow-hidden bg-[rgba(255,255,255,0.02)]
-          ${hint?.level === "error" || accessible === false ? "border-red-500/60" : hint?.level === "warning" ? "border-amber-400/50" : "border-[rgba(100,80,75,0.4)] focus-within:border-primary/50"}`}
+          ${hint?.level === "error" ? "border-red-500/60" : hint?.level === "warning" ? "border-amber-400/50" : "border-[rgba(100,80,75,0.4)] focus-within:border-primary/50"}`}
       >
         <span
           className={`font-mono text-xs font-bold px-3 py-3 border-r-2 border-[rgba(100,80,75,0.4)] flex-shrink-0 tracking-widest ${badgeColor}`}
@@ -201,33 +162,24 @@ export function AssetUrlRow({
           onChange={(e) => {
             onChange(e.target.value);
             setHint(null);
-            setAccessible(null);
           }}
           onBlur={handleBlur}
           required={!optional}
         />
 
         {/* 状态指示器 */}
-        {checking && (
-          <Loader2 className="size-4 text-slate-400 animate-spin mr-3 flex-shrink-0" />
-        )}
-        {!checking && value && accessible === true && !hint && (
+        {value && !hint && (
           <CheckCircle className="size-4 text-green-500 mr-3 flex-shrink-0" />
         )}
-        {!checking &&
-          value &&
-          (hint?.level === "error" || accessible === false) && (
-            <XCircle className="size-4 text-red-500 mr-3 flex-shrink-0" />
-          )}
-        {!checking &&
-          value &&
-          hint?.level === "warning" &&
-          accessible !== false && (
-            <AlertTriangle className="size-4 text-amber-400 mr-3 flex-shrink-0" />
-          )}
+        {value && hint?.level === "error" && (
+          <XCircle className="size-4 text-red-500 mr-3 flex-shrink-0" />
+        )}
+        {value && hint?.level === "warning" && (
+          <AlertTriangle className="size-4 text-amber-400 mr-3 flex-shrink-0" />
+        )}
 
         {/* 预览按钮 */}
-        {value && urlType && accessible !== false && (
+        {value && urlType && (
           <button
             type="button"
             onClick={() => setShowPreview(!showPreview)}

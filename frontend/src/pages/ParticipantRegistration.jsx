@@ -40,6 +40,14 @@ export default function ParticipantRegistration() {
     posterUrl: "",
   });
 
+  const [urlValidations, setUrlValidations] = useState({
+    pdfUrl: true,
+    posterUrl: true,
+    videoUrl: true,
+  });
+
+  const allUrlsValid = Object.values(urlValidations).every((v) => v);
+
   const currentStep = useMemo(() => {
     const step1Done =
       formData.fullName && formData.email && formData.organization;
@@ -49,11 +57,12 @@ export default function ParticipantRegistration() {
       formData.projectDescription &&
       formData.pdfUrl &&
       formData.posterUrl &&
-      formData.videoUrl;
+      formData.videoUrl &&
+      allUrlsValid;
     if (!step1Done) return 1;
     if (!step2Done) return 2;
     return 3;
-  }, [formData]);
+  }, [formData, allUrlsValid]);
 
   const set = (key, val) => setFormData((p) => ({ ...p, [key]: val }));
 
@@ -62,6 +71,13 @@ export default function ParticipantRegistration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!agreed) return;
+
+    // 检查 URL 验证状态
+    if (!allUrlsValid) {
+      setSubmitError("请确保所有链接都可以正常访问后再提交");
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError("");
     try {
@@ -303,7 +319,12 @@ export default function ParticipantRegistration() {
               <Step1PersonalInfo formData={formData} set={set} />
 
               {/* ── Step 2: Track + Project ── */}
-              <Step2ProjectProposal formData={formData} set={set} />
+              <Step2ProjectProposal
+                formData={formData}
+                set={set}
+                urlValidations={urlValidations}
+                setUrlValidations={setUrlValidations}
+              />
 
               {/* ── Step 3: Submit ── */}
               <Step3Submit

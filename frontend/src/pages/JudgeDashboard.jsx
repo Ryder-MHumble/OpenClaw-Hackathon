@@ -21,6 +21,11 @@ import {
   Loader2,
   ClipboardList,
   BarChart3,
+  Trash2,
+  PlayCircle,
+  StopCircle,
+  ShieldAlert,
+  Activity,
 } from "lucide-react";
 import apiClient from "../config/apiClient";
 import { getTrackInfo } from "../constants/tracks";
@@ -41,6 +46,8 @@ export default function JudgeDashboard() {
     rejected: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [voteControlLoading, setVoteControlLoading] = useState(false);
+  const [suspiciousCount, setSuspiciousCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,6 +57,7 @@ export default function JudgeDashboard() {
   useEffect(() => {
     fetchStats();
     fetchParticipants();
+    fetchSuspiciousCount();
     setCurrentPage(1);
   }, [filter]);
 
@@ -69,11 +77,34 @@ export default function JudgeDashboard() {
     }
   };
 
+  const handleDelete = async (participantId, projectTitle) => {
+    if (
+      !window.confirm(
+        `确定要删除 "${projectTitle}" 的参赛项目吗？此操作不可恢复！`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/api/judges/participants/${participantId}`);
+      // 重新加载数据
+      await fetchParticipants();
+      await fetchStats();
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("删除失败，请重试");
+    }
+  };
+
   const fetchParticipants = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("judgeToken");
-      if (!token) { navigate("/judge/login"); return; }
+      if (!token) {
+        navigate("/judge/login");
+        return;
+      }
       const statusParam = filter !== "all" ? `?status=${filter}` : "";
       const res = await apiClient.get(`/api/judges/participants${statusParam}`);
       const data = res.data.data;
@@ -100,6 +131,79 @@ export default function JudgeDashboard() {
     }
   };
 
+  const openTrackVoting = async (track) => {
+    const trackNames = {
+      academic: "学术龙虾",
+      productivity: "生产力龙虾",
+      life: "生活龙虾",
+      all: "全部赛道",
+    };
+    if (
+      !window.confirm(
+        `确认开启「${trackNames[track] || track}」赛道投票？\n将创建15分钟投票窗口`,
+      )
+    )
+      return;
+    setVoteControlLoading(true);
+    try {
+      const token = localStorage.getItem("judgeToken");
+      await apiClient.post(
+        "/api/voting/admin/open-track",
+        { track },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      alert(`✅ 「${trackNames[track] || track}」投票已开启（15分钟窗口）`);
+    } catch (err) {
+      alert(err.response?.data?.detail || "开启失败，请重试");
+    } finally {
+      setVoteControlLoading(false);
+    }
+  };
+
+  const closeTrackVoting = async (track) => {
+    const trackNames = {
+      academic: "学术龙虾",
+      productivity: "生产力龙虾",
+      life: "生活龙虾",
+      all: "全部赛道",
+    };
+    if (!window.confirm(`确认关闭「${trackNames[track] || track}」赛道投票？`))
+      return;
+    setVoteControlLoading(true);
+    try {
+      const token = localStorage.getItem("judgeToken");
+      await apiClient.post(
+        "/api/voting/admin/close-track",
+        { track },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      alert(`✅ 「${trackNames[track] || track}」投票已关闭`);
+    } catch (err) {
+      alert(err.response?.data?.detail || "关闭失败，请重试");
+    } finally {
+      setVoteControlLoading(false);
+    }
+  };
+
+  const fetchSuspiciousCount = async () => {
+    try {
+      const token = localStorage.getItem("judgeToken");
+      const res = await apiClient.get(
+        "/api/voting/admin/audit-logs?suspicious_only=true&limit=100",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      setSuspiciousCount(res.data.data?.length || 0);
+    } catch {
+      // non-critical
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "未知";
     const date = new Date(dateString);
@@ -117,8 +221,8 @@ export default function JudgeDashboard() {
   const filteredParticipants = participants.filter((p) => {
     const matchesFilter = filter === "all" || p.status === filter;
     const matchesSearch =
-      p.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.project_title.toLowerCase().includes(searchQuery.toLowerCase());
+      p.project_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.organization.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -130,20 +234,25 @@ export default function JudgeDashboard() {
 
   const getStatusBadge = (status) => {
     const badges = {
-      pending:   { bg: "bg-amber-500/90",  text: "待评审", Icon: Clock     },
-      reviewing: { bg: "bg-blue-500/90",   text: "评审中", Icon: ClipboardList },
-      scored:    { bg: "bg-green-500/90",  text: "已评分", Icon: Star      },
-      rejected:  { bg: "bg-red-500/90",    text: "已拒绝", Icon: XCircle   },
+      pending: { bg: "bg-amber-500/90", text: "待评审", Icon: Clock },
+      reviewing: { bg: "bg-blue-500/90", text: "评审中", Icon: ClipboardList },
+      scored: { bg: "bg-green-500/90", text: "已评分", Icon: Star },
+      rejected: { bg: "bg-red-500/90", text: "已拒绝", Icon: XCircle },
     };
     return badges[status] || badges.pending;
   };
 
   const TABS = [
-    { key: "all",       label: "全部团队",  Icon: LayoutGrid,    count: stats.total     },
-    { key: "pending",   label: "待评审",    Icon: Clock,         count: stats.pending   },
-    { key: "reviewing", label: "评审中",    Icon: ClipboardList, count: stats.reviewing },
-    { key: "scored",    label: "已评分",    Icon: Star,          count: stats.scored    },
-    { key: "rejected",  label: "已拒绝",    Icon: XCircle,       count: stats.rejected  },
+    { key: "all", label: "全部团队", Icon: LayoutGrid, count: stats.total },
+    { key: "pending", label: "待评审", Icon: Clock, count: stats.pending },
+    {
+      key: "reviewing",
+      label: "评审中",
+      Icon: ClipboardList,
+      count: stats.reviewing,
+    },
+    { key: "scored", label: "已评分", Icon: Star, count: stats.scored },
+    { key: "rejected", label: "已拒绝", Icon: XCircle, count: stats.rejected },
   ];
 
   const STAT_CARDS = [
@@ -236,7 +345,9 @@ export default function JudgeDashboard() {
         {/* Title */}
         <div className="flex flex-wrap justify-between items-end gap-4 mb-8">
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-3xl font-black tracking-tight">大赛评审工作台</h1>
+            <h1 className="text-3xl font-black tracking-tight">
+              大赛评审工作台
+            </h1>
             <p className="text-primary text-sm font-medium flex items-center gap-2">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
@@ -261,7 +372,9 @@ export default function JudgeDashboard() {
               transition={{ delay: 0.05 * idx }}
               className={`rounded-xl p-5 bg-white/[0.03] border border-white/[0.06] ${card.borderClass}`}
             >
-              <p className={`text-xs font-medium mb-1 ${card.accentClass}`}>{card.label}</p>
+              <p className={`text-xs font-medium mb-1 ${card.accentClass}`}>
+                {card.label}
+              </p>
               <p className="text-3xl font-black text-slate-100">{card.value}</p>
               <div className="w-full bg-white/5 h-0.5 rounded-full mt-4">
                 <motion.div
@@ -273,6 +386,81 @@ export default function JudgeDashboard() {
               </div>
             </motion.div>
           ))}
+        </div>
+
+        {/* 投票控制面板 */}
+        <div className="mb-8 rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Activity size={16} className="text-primary" />
+              <h2 className="text-sm font-bold text-slate-100">投票控制台</h2>
+              <span className="text-xs text-slate-500">
+                · 路演结束后开启对应赛道投票（15分钟窗口）
+              </span>
+            </div>
+            {suspiciousCount > 0 && (
+              <button
+                onClick={() => navigate("/judge/voting/monitor")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/20 transition-colors"
+              >
+                <ShieldAlert size={13} />
+                {suspiciousCount} 条可疑投票
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              {
+                track: "academic",
+                label: "学术龙虾",
+                icon: "🎓",
+                color: "blue",
+              },
+              {
+                track: "productivity",
+                label: "生产力龙虾",
+                icon: "⚡",
+                color: "amber",
+              },
+              {
+                track: "life",
+                label: "生活龙虾",
+                icon: "🌟",
+                color: "emerald",
+              },
+            ].map(({ track, label, icon, color }) => (
+              <div
+                key={track}
+                className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{icon}</span>
+                  <span className="text-sm font-medium text-slate-200">
+                    {label}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openTrackVoting(track)}
+                    disabled={voteControlLoading}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-40"
+                  >
+                    <PlayCircle size={12} />
+                    开启
+                  </button>
+                  <button
+                    onClick={() => closeTrackVoting(track)}
+                    disabled={voteControlLoading}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-500/10 border border-slate-500/20 text-slate-400 text-xs font-medium hover:bg-slate-500/20 transition-colors disabled:opacity-40"
+                  >
+                    <StopCircle size={12} />
+                    关闭
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Filter Tabs */}
@@ -290,7 +478,9 @@ export default function JudgeDashboard() {
               >
                 <Icon size={13} />
                 {label}
-                <span className={`text-xs px-1.5 py-0.5 rounded-md ${filter === key ? "bg-primary/20 text-primary" : "bg-white/5 text-slate-600"}`}>
+                <span
+                  className={`text-xs px-1.5 py-0.5 rounded-md ${filter === key ? "bg-primary/20 text-primary" : "bg-white/5 text-slate-600"}`}
+                >
                   {count}
                 </span>
               </button>
@@ -308,7 +498,11 @@ export default function JudgeDashboard() {
           </div>
         ) : filteredParticipants.length === 0 ? (
           <div className="text-center py-24">
-            <Inbox size={48} className="text-slate-700 mx-auto mb-4" strokeWidth={1.2} />
+            <Inbox
+              size={48}
+              className="text-slate-700 mx-auto mb-4"
+              strokeWidth={1.2}
+            />
             <p className="text-slate-500">暂无参赛项目</p>
           </div>
         ) : (
@@ -335,14 +529,18 @@ export default function JudgeDashboard() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
 
                     {/* 状态徽章 */}
-                    <div className={`absolute top-3 right-3 ${badge.bg} text-white text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 backdrop-blur-sm`}>
+                    <div
+                      className={`absolute top-3 right-3 ${badge.bg} text-white text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 backdrop-blur-sm`}
+                    >
                       <BadgeIcon size={10} />
                       {badge.text}
                     </div>
 
                     {/* 赛道徽章 */}
                     {trackInfo && (
-                      <div className={`absolute top-3 left-3 ${trackInfo.bg} ${trackInfo.color} text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 backdrop-blur-sm border ${trackInfo.border}`}>
+                      <div
+                        className={`absolute top-3 left-3 ${trackInfo.bg} ${trackInfo.color} text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 backdrop-blur-sm border ${trackInfo.border}`}
+                      >
                         <span>{trackInfo.emoji}</span>
                         <span>{trackInfo.title}</span>
                       </div>
@@ -352,13 +550,32 @@ export default function JudgeDashboard() {
                     <div className="absolute inset-0 flex flex-col justify-end p-4">
                       <div className="flex justify-between items-start mb-2.5">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-base font-bold text-white mb-0.5 truncate">{participant.full_name}</h3>
-                          <p className="text-primary text-xs font-medium line-clamp-1">{participant.project_title}</p>
+                          <h3 className="text-base font-bold text-white mb-0.5 truncate">
+                            {participant.project_title}
+                          </h3>
+                          <p className="text-slate-400 text-xs font-medium line-clamp-1">
+                            {participant.organization}
+                          </p>
                         </div>
                         <div className="flex gap-2 ml-3 shrink-0">
-                          {participant.has_pdf   && <FileText size={15} className="text-primary/70 hover:text-primary cursor-pointer transition-colors" />}
-                          {participant.has_video && <Video    size={15} className="text-primary/70 hover:text-primary cursor-pointer transition-colors" />}
-                          {participant.has_url   && <Link2    size={15} className="text-primary/70 hover:text-primary cursor-pointer transition-colors" />}
+                          {participant.has_pdf && (
+                            <FileText
+                              size={15}
+                              className="text-primary/70 hover:text-primary cursor-pointer transition-colors"
+                            />
+                          )}
+                          {participant.has_video && (
+                            <Video
+                              size={15}
+                              className="text-primary/70 hover:text-primary cursor-pointer transition-colors"
+                            />
+                          )}
+                          {participant.has_url && (
+                            <Link2
+                              size={15}
+                              className="text-primary/70 hover:text-primary cursor-pointer transition-colors"
+                            />
+                          )}
                         </div>
                       </div>
 
@@ -369,22 +586,34 @@ export default function JudgeDashboard() {
                         </span>
                         <span className="flex items-center gap-1 truncate">
                           <Building2 size={11} className="shrink-0" />
-                          <span className="truncate">{participant.organization}</span>
+                          <span className="truncate">
+                            {participant.organization}
+                          </span>
                         </span>
                       </div>
 
                       <div className="flex gap-2">
                         <button
-                          onClick={() => navigate(`/judge/scoring/${participant.id}`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/judge/scoring/${participant.id}`);
+                          }}
                           className="flex-1 bg-primary hover:bg-primary/85 text-white py-2 rounded-lg text-sm font-bold transition-all duration-200 group-hover:shadow-lg group-hover:shadow-primary/30"
                         >
                           查看详情
                         </button>
                         <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="px-3 bg-white/[0.08] hover:bg-white/15 rounded-lg text-white hover:text-primary transition-all duration-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(
+                              participant.id,
+                              participant.project_title,
+                            );
+                          }}
+                          className="px-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 hover:text-red-300 transition-all duration-200"
+                          title="删除项目"
                         >
-                          <MoreHorizontal size={15} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </div>
@@ -406,26 +635,39 @@ export default function JudgeDashboard() {
               <ChevronLeft size={16} />
             </button>
             <div className="flex items-center gap-1.5">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                if (page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1) {
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`size-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
-                        page === currentPage
-                          ? "bg-primary text-white shadow-lg shadow-primary/30"
-                          : "bg-white/[0.04] border border-white/[0.06] text-slate-400 hover:text-primary hover:border-primary/30"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                } else if (page === currentPage - 2 || page === currentPage + 2) {
-                  return <span key={page} className="text-slate-600 px-1 text-sm">…</span>;
-                }
-                return null;
-              })}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => {
+                  if (
+                    page === 1 ||
+                    page === totalPages ||
+                    Math.abs(page - currentPage) <= 1
+                  ) {
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`size-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
+                          page === currentPage
+                            ? "bg-primary text-white shadow-lg shadow-primary/30"
+                            : "bg-white/[0.04] border border-white/[0.06] text-slate-400 hover:text-primary hover:border-primary/30"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  } else if (
+                    page === currentPage - 2 ||
+                    page === currentPage + 2
+                  ) {
+                    return (
+                      <span key={page} className="text-slate-600 px-1 text-sm">
+                        …
+                      </span>
+                    );
+                  }
+                  return null;
+                },
+              )}
             </div>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
@@ -435,7 +677,12 @@ export default function JudgeDashboard() {
               <ChevronRight size={16} />
             </button>
             <span className="text-xs text-slate-600 ml-2 font-mono">
-              {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredParticipants.length)} / {filteredParticipants.length}
+              {(currentPage - 1) * itemsPerPage + 1}–
+              {Math.min(
+                currentPage * itemsPerPage,
+                filteredParticipants.length,
+              )}{" "}
+              / {filteredParticipants.length}
             </span>
           </div>
         )}

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Users } from "lucide-react";
 import {
   PanelHeader,
   MonoField,
@@ -7,8 +7,44 @@ import {
   TerminalInput,
 } from "./FormInputs";
 import { TRACKS } from "../../constants/registration";
+import { useState, useEffect } from "react";
+import apiClient from "../../config/apiClient";
 
-export function Step2ProjectProposal({ formData, set }) {
+export function Step2ProjectProposal({
+  formData,
+  set,
+  urlValidations,
+  setUrlValidations,
+}) {
+  const [trackStats, setTrackStats] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTrackStats = async () => {
+      try {
+        const response = await apiClient.get(
+          "/api/judges/participants/stats/tracks",
+        );
+        const stats = {};
+        response.data.data.forEach((item) => {
+          stats[item.track] = item.count;
+        });
+        setTrackStats(stats);
+      } catch (error) {
+        console.error("Failed to fetch track stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTrackStats();
+  }, []);
+
+  const handleValidationChange = (field, isValid) => {
+    setUrlValidations((prev) => ({ ...prev, [field]: isValid }));
+  };
+
+  const allUrlsValid = Object.values(urlValidations).every((v) => v);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -24,7 +60,8 @@ export function Step2ProjectProposal({ formData, set }) {
             formData.projectTitle &&
             formData.projectDescription &&
             formData.pdfUrl &&
-            formData.videoUrl
+            formData.videoUrl &&
+            allUrlsValid
           )
         }
       />
@@ -37,10 +74,12 @@ export function Step2ProjectProposal({ formData, set }) {
           </label>
           <p className="text-xs text-slate-500 mb-3">
             选择你的参赛赛道（不限身份 · 不限年龄 · 不限技术背景）
+            <span className="text-amber-400 font-semibold ml-2">· 必选项</span>
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {TRACKS.map((track) => {
               const isSelected = formData.track === track.id;
+              const count = trackStats[track.id] || 0;
               return (
                 <motion.button
                   key={track.id}
@@ -81,6 +120,23 @@ export function Step2ProjectProposal({ formData, set }) {
                   >
                     {track.desc}
                   </p>
+                  {!loading && (
+                    <div
+                      className={`flex items-center gap-1 mt-2 pt-2 border-t ${isSelected ? "border-white/10" : "border-white/5"}`}
+                    >
+                      <Users
+                        size={12}
+                        className={
+                          isSelected ? "text-slate-400" : "text-slate-600"
+                        }
+                      />
+                      <span
+                        className={`text-[10px] font-mono ${isSelected ? "text-slate-400" : "text-slate-600"}`}
+                      >
+                        {count} 人已报名
+                      </span>
+                    </div>
+                  )}
                 </motion.button>
               );
             })}
@@ -157,6 +213,9 @@ export function Step2ProjectProposal({ formData, set }) {
               placeholder="项目说明书链接（10页以内 · 必填）"
               value={formData.pdfUrl}
               onChange={(v) => set("pdfUrl", v)}
+              onValidationChange={(isValid) =>
+                handleValidationChange("pdfUrl", isValid)
+              }
             />
             <AssetUrlRow
               badge="项目海报"
@@ -164,6 +223,9 @@ export function Step2ProjectProposal({ formData, set }) {
               placeholder="宣传海报图片链接（必填）"
               value={formData.posterUrl}
               onChange={(v) => set("posterUrl", v)}
+              onValidationChange={(isValid) =>
+                handleValidationChange("posterUrl", isValid)
+              }
             />
             <AssetUrlRow
               badge="vid://"
@@ -171,6 +233,9 @@ export function Step2ProjectProposal({ formData, set }) {
               placeholder="演示视频链接（YouTube / Bilibili · 3分钟以内 · 必填）"
               value={formData.videoUrl}
               onChange={(v) => set("videoUrl", v)}
+              onValidationChange={(isValid) =>
+                handleValidationChange("videoUrl", isValid)
+              }
             />
           </div>
         </div>

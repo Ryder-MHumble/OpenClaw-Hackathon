@@ -22,6 +22,7 @@ import {
   Send,
   AlertTriangle,
   ArrowRight,
+  Trash2,
 } from "lucide-react";
 import apiClient from "../config/apiClient";
 import { getTrackInfo } from "../constants/tracks";
@@ -206,17 +207,41 @@ export default function JudgeScoring() {
     participant &&
     (participant.status === "scored" || participant.status === "rejected");
 
+  const handleDelete = async () => {
+    if (!window.confirm("确定要删除这个参赛项目吗？此操作不可恢复！")) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await apiClient.delete(`/api/judges/participants/${teamId}`);
+
+      setModal({
+        show: true,
+        type: "approved",
+        title: "删除成功",
+        message: "项目已删除，即将返回列表",
+      });
+
+      setTimeout(() => {
+        navigate("/judge/dashboard");
+      }, 1500);
+    } catch (error) {
+      console.error(error);
+      alert("删除失败，请重试");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handlePreliminarySubmit = async (decision) => {
     setSubmitting(true);
     try {
       const newStatus = decision === "approved" ? "reviewing" : "rejected";
-      const formData = new FormData();
-      formData.append("status", newStatus);
-      if (comments) formData.append("comments", comments);
-      await apiClient.patch(
-        `/api/judges/participants/${teamId}/status`,
-        formData,
-      );
+      await apiClient.patch(`/api/judges/participants/${teamId}/status`, {
+        status: newStatus,
+        comments: comments || undefined,
+      });
 
       setModal({
         show: true,
@@ -305,9 +330,14 @@ export default function JudgeScoring() {
   const videoEmbedUrl = getVideoEmbedUrl(participant.video_url);
 
   const tabs = [
-    { id: "pdf", label: "项目计划书 (PDF)", Icon: FileText },
-    { id: "video", label: "演示视频", Icon: PlayCircle },
-    { id: "poster", label: "项目海报", Icon: Image },
+    {
+      id: "pdf",
+      label: "计划书",
+      labelFull: "项目计划书 (PDF)",
+      Icon: FileText,
+    },
+    { id: "video", label: "视频", labelFull: "演示视频", Icon: PlayCircle },
+    { id: "poster", label: "海报", labelFull: "项目海报", Icon: Image },
   ];
 
   const scoreDimensions = [
@@ -329,51 +359,66 @@ export default function JudgeScoring() {
       />
 
       {/* Header */}
-      <header className="glass-panel sticky top-0 z-50 border-b border-primary/20 px-6 lg:px-20 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
+      <header className="glass-panel sticky top-0 z-50 border-b border-primary/20 px-4 lg:px-20 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => navigate("/judge/dashboard")}
-              className="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors text-sm font-bold"
+              className="flex items-center gap-1.5 text-slate-400 hover:text-primary transition-colors text-sm font-bold shrink-0"
             >
               <ArrowLeft className="size-4" />
-              返回项目列表
+              <span className="hidden sm:inline">返回项目列表</span>
             </button>
-            <div className="h-6 w-px bg-primary/20" />
-            <nav className="flex items-center gap-2 text-sm text-slate-500">
+            <div className="hidden sm:block h-6 w-px bg-primary/20" />
+            <nav className="hidden md:flex items-center gap-2 text-sm text-slate-500">
               <span className="hover:text-primary cursor-pointer">项目库</span>
               <ChevronRight className="size-3" />
               <span className="text-primary font-medium">团队详情</span>
             </nav>
+            {/* Mobile: show project title truncated */}
+            <span className="sm:hidden text-sm font-medium text-slate-300 truncate max-w-[140px]">
+              {participant?.project_title}
+            </span>
           </div>
 
-          <div className="flex items-center gap-2 bg-primary/10 rounded-lg p-1">
-            <div
-              className={`px-4 py-2 rounded text-sm font-bold ${
-                reviewMode === "preliminary"
-                  ? "bg-primary text-white"
-                  : "bg-transparent text-slate-400"
-              }`}
-            >
-              {reviewMode === "preliminary" ? "初筛阶段" : "评审阶段"}
-            </div>
-            {participant && (
-              <div className="text-xs text-slate-500 px-2">
-                状态:{" "}
-                {participant.status === "pending" && "待初筛"}
-                {participant.status === "reviewing" && "待评分"}
-                {participant.status === "scored" && "已评分"}
-                {participant.status === "rejected" && "已拒绝"}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center bg-primary/10 rounded-lg p-1">
+              <div
+                className={`px-2 sm:px-4 py-1.5 rounded text-xs sm:text-sm font-bold whitespace-nowrap ${
+                  reviewMode === "preliminary"
+                    ? "bg-primary text-white"
+                    : "bg-transparent text-slate-400"
+                }`}
+              >
+                {reviewMode === "preliminary" ? "初筛" : "评审"}
               </div>
-            )}
+              {participant && (
+                <div className="hidden sm:block text-xs text-slate-500 px-2">
+                  {participant.status === "pending" && "待初筛"}
+                  {participant.status === "reviewing" && "待评分"}
+                  {participant.status === "scored" && "已评分"}
+                  {participant.status === "rejected" && "已拒绝"}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleDelete}
+              disabled={submitting}
+              className="p-2 sm:px-4 sm:py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/30 transition-all flex items-center gap-2 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+              title="删除此项目"
+            >
+              <Trash2 className="size-4" />
+              <span className="hidden sm:inline">删除</span>
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 lg:px-10 py-8">
+      <main className="flex-1 max-w-[1800px] mx-auto w-full px-4 lg:px-10 py-6 lg:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* 左侧：项目信息 */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
+          <div className="lg:col-span-3 flex flex-col gap-6">
             {/* 项目基本信息 */}
             <section className="glass-panel p-6 rounded-xl border border-primary/10">
               <h1 className="text-2xl font-black mb-2 leading-tight line-clamp-3">
@@ -413,23 +458,12 @@ export default function JudgeScoring() {
                     <User className="size-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold truncate">
-                      {participant.full_name}
-                    </div>
+                    <div className="text-sm font-bold truncate">匿名参赛者</div>
                     <div className="text-xs text-slate-500 truncate">
                       {participant.organization}
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    {participant.email && (
-                      <a
-                        href={`mailto:${participant.email}`}
-                        className="p-1.5 rounded-md text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
-                        title={participant.email}
-                      >
-                        <Mail className="size-4" />
-                      </a>
-                    )}
                     {participant.github && (
                       <a
                         href={participant.github}
@@ -476,22 +510,25 @@ export default function JudgeScoring() {
           </div>
 
           {/* 右侧：材料查看器 */}
-          <div className="lg:col-span-8">
-            <div className="glass-panel rounded-xl border border-primary/10 overflow-hidden flex flex-col" style={{ height: "640px" }}>
+          <div className="lg:col-span-9">
+            <div className="glass-panel rounded-xl border border-primary/10 overflow-hidden flex flex-col h-[55vw] sm:h-[600px] lg:h-[800px] min-h-[400px] max-h-[900px]">
               {/* Tab 切换 */}
               <div className="flex bg-background-dark/40 border-b border-primary/10 p-1 shrink-0">
-                {tabs.map(({ id, label, Icon }) => (
+                {tabs.map(({ id, label, labelFull, Icon }) => (
                   <button
                     key={id}
                     onClick={() => setActiveTab(id)}
-                    className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    className={`flex-1 py-2.5 px-1 sm:px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 transition-all ${
                       activeTab === id
                         ? "bg-primary text-white"
                         : "text-slate-500 hover:bg-primary/10 hover:text-primary"
                     }`}
                   >
                     <Icon className="size-3.5 shrink-0" />
-                    <span className="truncate">{label}</span>
+                    <span className="sm:hidden">{label}</span>
+                    <span className="hidden sm:inline truncate">
+                      {labelFull}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -499,8 +536,8 @@ export default function JudgeScoring() {
               {/* 内容区域 */}
               <div className="flex-1 relative min-h-0">
                 {/* PDF Tab */}
-                {activeTab === "pdf" && (
-                  participant.pdf_url ? (
+                {activeTab === "pdf" &&
+                  (participant.pdf_url ? (
                     <div className="w-full h-full relative">
                       {loadingStates.pdf && <LoadingOverlay />}
                       {!failedLoads.pdf && (
@@ -508,7 +545,9 @@ export default function JudgeScoring() {
                           src={participant.pdf_url}
                           className="w-full h-full"
                           title="项目计划书"
-                          onLoad={() => setLoadingStates((p) => ({ ...p, pdf: false }))}
+                          onLoad={() =>
+                            setLoadingStates((p) => ({ ...p, pdf: false }))
+                          }
                           onError={() => {
                             setLoadingStates((p) => ({ ...p, pdf: false }));
                             setFailedLoads((p) => ({ ...p, pdf: true }));
@@ -524,12 +563,11 @@ export default function JudgeScoring() {
                     </div>
                   ) : (
                     <EmptyState Icon={FileText} label="暂无项目计划书" />
-                  )
-                )}
+                  ))}
 
                 {/* Video Tab */}
-                {activeTab === "video" && (
-                  participant.video_url && videoEmbedUrl ? (
+                {activeTab === "video" &&
+                  (participant.video_url && videoEmbedUrl ? (
                     <div className="w-full h-full relative">
                       {loadingStates.video && <LoadingOverlay />}
                       <iframe
@@ -538,7 +576,9 @@ export default function JudgeScoring() {
                         title="演示视频"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
-                        onLoad={() => setLoadingStates((p) => ({ ...p, video: false }))}
+                        onLoad={() =>
+                          setLoadingStates((p) => ({ ...p, video: false }))
+                        }
                         onError={() => {
                           setLoadingStates((p) => ({ ...p, video: false }));
                           setFailedLoads((p) => ({ ...p, video: true }));
@@ -553,12 +593,11 @@ export default function JudgeScoring() {
                     </div>
                   ) : (
                     <EmptyState Icon={PlayCircle} label="暂无演示视频" />
-                  )
-                )}
+                  ))}
 
                 {/* Poster Tab */}
-                {activeTab === "poster" && (
-                  participant.poster_url ? (
+                {activeTab === "poster" &&
+                  (participant.poster_url ? (
                     <div className="w-full h-full overflow-auto bg-background-dark/20 flex items-center justify-center p-4 relative">
                       {loadingStates.poster && <LoadingOverlay />}
                       {!failedLoads.poster && (
@@ -566,7 +605,9 @@ export default function JudgeScoring() {
                           src={`${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(participant.poster_url)}`}
                           alt="项目海报"
                           className="max-w-full max-h-full object-contain"
-                          onLoad={() => setLoadingStates((p) => ({ ...p, poster: false }))}
+                          onLoad={() =>
+                            setLoadingStates((p) => ({ ...p, poster: false }))
+                          }
                           onError={() => {
                             setLoadingStates((p) => ({ ...p, poster: false }));
                             setFailedLoads((p) => ({ ...p, poster: true }));
@@ -582,8 +623,7 @@ export default function JudgeScoring() {
                     </div>
                   ) : (
                     <EmptyState Icon={Image} label="暂无项目海报" />
-                  )
-                )}
+                  ))}
               </div>
 
               {/* 底部工具栏 */}
@@ -633,7 +673,9 @@ export default function JudgeScoring() {
                   )}
                   <div>
                     <h2 className="text-2xl font-bold">
-                      {participant.status === "scored" ? "已完成评分" : "已标记为不通过"}
+                      {participant.status === "scored"
+                        ? "已完成评分"
+                        : "已标记为不通过"}
                     </h2>
                     <p className="text-slate-400 text-sm">
                       {participant.status === "scored"
@@ -662,7 +704,9 @@ export default function JudgeScoring() {
                       ))}
                     </div>
                     <div className="p-5 bg-primary/10 rounded-xl border border-primary/30 flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-400">加权总分</span>
+                      <span className="text-sm font-medium text-slate-400">
+                        加权总分
+                      </span>
                       <div className="flex items-baseline gap-1">
                         <span className="text-4xl font-black text-primary">
                           {existingScore.weighted}
@@ -680,7 +724,9 @@ export default function JudgeScoring() {
                   <ClipboardList className="size-6 text-primary shrink-0" />
                   <div>
                     <h2 className="text-2xl font-bold">初筛评审</h2>
-                    <p className="text-sm text-slate-400">请根据项目材料判断是否通过初筛</p>
+                    <p className="text-sm text-slate-400">
+                      请根据项目材料判断是否通过初筛
+                    </p>
                   </div>
                 </div>
 
@@ -704,7 +750,9 @@ export default function JudgeScoring() {
                 </div>
 
                 <div className="pt-4 border-t border-white/10">
-                  <label className="block text-sm font-medium mb-2">备注（可选）</label>
+                  <label className="block text-sm font-medium mb-2">
+                    备注（可选）
+                  </label>
                   <textarea
                     value={comments}
                     onChange={(e) => setComments(e.target.value)}
@@ -737,7 +785,9 @@ export default function JudgeScoring() {
                         <label className="text-sm font-bold flex items-center gap-2">
                           <dim.Icon className="size-4 text-primary" />
                           {dim.label}
-                          <span className="text-xs text-slate-500">({dim.weight})</span>
+                          <span className="text-xs text-slate-500">
+                            ({dim.weight})
+                          </span>
                         </label>
                         <span className="text-2xl font-black text-primary">
                           {scores[dim.key].toFixed(1)}
@@ -750,7 +800,10 @@ export default function JudgeScoring() {
                         step="0.5"
                         value={scores[dim.key]}
                         onChange={(e) =>
-                          setScores({ ...scores, [dim.key]: parseFloat(e.target.value) })
+                          setScores({
+                            ...scores,
+                            [dim.key]: parseFloat(e.target.value),
+                          })
                         }
                         className="w-full h-2 bg-primary/20 rounded-lg appearance-none cursor-pointer accent-primary"
                       />
@@ -761,20 +814,26 @@ export default function JudgeScoring() {
                 <div className="p-6 bg-primary/10 rounded-xl border-2 border-primary/30">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-sm font-medium text-slate-400">最终加权总分</span>
+                      <span className="text-sm font-medium text-slate-400">
+                        最终加权总分
+                      </span>
                       <p className="text-xs text-slate-500 mt-1">
                         创新×0.3 + 技术×0.3 + 市场×0.2 + Demo×0.2
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className="text-5xl font-black text-primary">{weightedScore}</span>
+                      <span className="text-5xl font-black text-primary">
+                        {weightedScore}
+                      </span>
                       <span className="text-xl text-slate-400 ml-1">/ 10</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2">评审意见</label>
+                  <label className="block text-sm font-bold mb-2">
+                    评审意见
+                  </label>
                   <textarea
                     value={comments}
                     onChange={(e) => setComments(e.target.value)}
@@ -819,7 +878,9 @@ function ExpandableText({ text, className }) {
   const isLong = text.length > 200;
   return (
     <div className="mb-5">
-      <p className={`${className} ${!expanded && isLong ? "line-clamp-4" : ""}`}>
+      <p
+        className={`${className} ${!expanded && isLong ? "line-clamp-4" : ""}`}
+      >
         {text}
       </p>
       {isLong && (
@@ -875,7 +936,9 @@ function FailedOverlay({ href, label }) {
         <AlertTriangle className="size-10 text-yellow-500" />
         <div className="text-center">
           <p className="text-sm font-medium mb-1">无法在当前窗口加载</p>
-          <p className="text-xs text-slate-400 mb-4">请点击下方按钮在新窗口打开</p>
+          <p className="text-xs text-slate-400 mb-4">
+            请点击下方按钮在新窗口打开
+          </p>
         </div>
         <a
           href={href}

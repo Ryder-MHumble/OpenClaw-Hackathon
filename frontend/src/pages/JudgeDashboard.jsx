@@ -15,17 +15,13 @@ import {
   Link2,
   Building2,
   CalendarClock,
-  MoreHorizontal,
   Trophy,
   Inbox,
   Loader2,
   ClipboardList,
   BarChart3,
   Trash2,
-  PlayCircle,
-  StopCircle,
-  ShieldAlert,
-  Activity,
+  LogOut,
 } from "lucide-react";
 import apiClient from "../config/apiClient";
 import { getTrackInfo } from "../constants/tracks";
@@ -52,8 +48,7 @@ export default function JudgeDashboard() {
     life: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [voteControlLoading, setVoteControlLoading] = useState(false);
-  const [suspiciousCount, setSuspiciousCount] = useState(0);
+  const [exportLoading, setExportLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -64,7 +59,6 @@ export default function JudgeDashboard() {
     fetchStats();
     fetchTrackStats();
     fetchParticipants();
-    fetchSuspiciousCount();
     setCurrentPage(1);
   }, [filter, trackFilter]);
 
@@ -86,7 +80,10 @@ export default function JudgeDashboard() {
 
   const fetchTrackStats = async () => {
     try {
-      const res = await apiClient.get("/api/judges/participants/stats/tracks");
+      const statusParam = filter !== "all" ? `?status=${filter}` : "";
+      const res = await apiClient.get(
+        `/api/judges/participants/stats/tracks${statusParam}`,
+      );
       const data = res.data.data;
       const stats = {
         academic: 0,
@@ -158,76 +155,45 @@ export default function JudgeDashboard() {
     }
   };
 
-  const openTrackVoting = async (track) => {
-    const trackNames = {
-      academic: "学术龙虾",
-      productivity: "生产力龙虾",
-      life: "生活龙虾",
-      all: "全部赛道",
-    };
-    if (
-      !window.confirm(
-        `确认开启「${trackNames[track] || track}」赛道投票？\n将创建15分钟投票窗口`,
-      )
-    )
-      return;
-    setVoteControlLoading(true);
+  const handleExportExcel = async () => {
+    setExportLoading(true);
     try {
       const token = localStorage.getItem("judgeToken");
-      await apiClient.post(
-        "/api/voting/admin/open-track",
-        { track },
+      const response = await fetch(
+        `${API_BASE_URL}/api/judges/participants/export/excel`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       );
-      alert(`✅ 「${trackNames[track] || track}」投票已开启（15分钟窗口）`);
-    } catch (err) {
-      alert(err.response?.data?.detail || "开启失败，请重试");
+
+      if (!response.ok) {
+        throw new Error("导出失败");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `参赛者评审情况_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("导出失败，请重试");
     } finally {
-      setVoteControlLoading(false);
+      setExportLoading(false);
     }
   };
 
-  const closeTrackVoting = async (track) => {
-    const trackNames = {
-      academic: "学术龙虾",
-      productivity: "生产力龙虾",
-      life: "生活龙虾",
-      all: "全部赛道",
-    };
-    if (!window.confirm(`确认关闭「${trackNames[track] || track}」赛道投票？`))
-      return;
-    setVoteControlLoading(true);
-    try {
-      const token = localStorage.getItem("judgeToken");
-      await apiClient.post(
-        "/api/voting/admin/close-track",
-        { track },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      alert(`✅ 「${trackNames[track] || track}」投票已关闭`);
-    } catch (err) {
-      alert(err.response?.data?.detail || "关闭失败，请重试");
-    } finally {
-      setVoteControlLoading(false);
-    }
-  };
-
-  const fetchSuspiciousCount = async () => {
-    try {
-      const token = localStorage.getItem("judgeToken");
-      const res = await apiClient.get(
-        "/api/voting/admin/audit-logs?suspicious_only=true&limit=100",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      setSuspiciousCount(res.data.data?.length || 0);
-    } catch {
-      // non-critical
+  const handleLogout = () => {
+    if (window.confirm("确定要退出登录吗？")) {
+      localStorage.removeItem("judgeToken");
+      navigate("/judge/login");
     }
   };
 
@@ -369,18 +335,15 @@ export default function JudgeDashboard() {
                 <BarChart3 size={14} />
                 排行榜
               </button>
+              <button
+                onClick={handleLogout}
+                className="text-slate-500 hover:text-red-400 transition-colors text-sm font-medium flex items-center gap-1.5"
+                title="退出登录"
+              >
+                <LogOut size={14} />
+                退出
+              </button>
             </nav>
-
-            {/* 搜索框 */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.06] focus-within:border-primary/30 transition-colors min-w-48">
-              <Search size={13} className="text-slate-500 shrink-0" />
-              <input
-                className="bg-transparent text-slate-100 placeholder:text-slate-600 text-sm outline-none w-full"
-                placeholder="搜索团队或项目…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
           </div>
         </div>
       </header>
@@ -400,9 +363,22 @@ export default function JudgeDashboard() {
               当前阶段：初赛作品筛选
             </p>
           </div>
-          <button className="bg-primary hover:bg-primary/85 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
-            <Download size={14} />
-            导出评审报告
+          <button
+            onClick={handleExportExcel}
+            disabled={exportLoading}
+            className="bg-primary hover:bg-primary/85 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exportLoading ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                导出中...
+              </>
+            ) : (
+              <>
+                <Download size={14} />
+                导出评审报告
+              </>
+            )}
           </button>
         </div>
 
@@ -482,81 +458,6 @@ export default function JudgeDashboard() {
           ))}
         </div>
 
-        {/* 投票控制面板 */}
-        <div className="mb-8 rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Activity size={16} className="text-primary" />
-              <h2 className="text-sm font-bold text-slate-100">投票控制台</h2>
-              <span className="text-xs text-slate-500">
-                · 路演结束后开启对应赛道投票（15分钟窗口）
-              </span>
-            </div>
-            {suspiciousCount > 0 && (
-              <button
-                onClick={() => navigate("/judge/voting/monitor")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/20 transition-colors"
-              >
-                <ShieldAlert size={13} />
-                {suspiciousCount} 条可疑投票
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              {
-                track: "academic",
-                label: "学术龙虾",
-                icon: "🎓",
-                color: "blue",
-              },
-              {
-                track: "productivity",
-                label: "生产力龙虾",
-                icon: "⚡",
-                color: "amber",
-              },
-              {
-                track: "life",
-                label: "生活龙虾",
-                icon: "🌟",
-                color: "emerald",
-              },
-            ].map(({ track, label, icon, color }) => (
-              <div
-                key={track}
-                className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{icon}</span>
-                  <span className="text-sm font-medium text-slate-200">
-                    {label}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openTrackVoting(track)}
-                    disabled={voteControlLoading}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-colors disabled:opacity-40"
-                  >
-                    <PlayCircle size={12} />
-                    开启
-                  </button>
-                  <button
-                    onClick={() => closeTrackVoting(track)}
-                    disabled={voteControlLoading}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-500/10 border border-slate-500/20 text-slate-400 text-xs font-medium hover:bg-slate-500/20 transition-colors disabled:opacity-40"
-                  >
-                    <StopCircle size={12} />
-                    关闭
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Filter Tabs */}
         <div className="mb-5 overflow-x-auto">
           <div className="flex border-b border-white/[0.07] gap-1 min-w-max">
@@ -582,28 +483,41 @@ export default function JudgeDashboard() {
           </div>
         </div>
 
-        {/* Track Filter Tabs */}
-        <div className="mb-7 overflow-x-auto">
-          <div className="flex gap-2 min-w-max">
-            {TRACK_TABS.map(({ key, label, emoji, count }) => (
-              <button
-                key={key}
-                onClick={() => setTrackFilter(key)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  trackFilter === key
-                    ? "bg-primary/15 border-2 border-primary/40 text-white shadow-lg shadow-primary/10"
-                    : "bg-white/[0.03] border-2 border-white/[0.06] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
-                }`}
-              >
-                <span className="text-base">{emoji}</span>
-                <span>{label}</span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-md font-mono ${trackFilter === key ? "bg-primary/25 text-primary" : "bg-white/5 text-slate-600"}`}
+        {/* Track Filter Tabs with Search */}
+        <div className="mb-7 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          <div className="overflow-x-auto w-full sm:w-auto">
+            <div className="flex gap-2 min-w-max">
+              {TRACK_TABS.map(({ key, label, emoji, count }) => (
+                <button
+                  key={key}
+                  onClick={() => setTrackFilter(key)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    trackFilter === key
+                      ? "bg-primary/15 border-2 border-primary/40 text-white shadow-lg shadow-primary/10"
+                      : "bg-white/[0.03] border-2 border-white/[0.06] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                  }`}
                 >
-                  {count}
-                </span>
-              </button>
-            ))}
+                  <span className="text-base">{emoji}</span>
+                  <span>{label}</span>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-md font-mono ${trackFilter === key ? "bg-primary/25 text-primary" : "bg-white/5 text-slate-600"}`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 搜索框 */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.06] focus-within:border-primary/30 transition-colors w-full sm:w-64">
+            <Search size={13} className="text-slate-500 shrink-0" />
+            <input
+              className="bg-transparent text-slate-100 placeholder:text-slate-600 text-sm outline-none w-full"
+              placeholder="搜索团队或项目…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
 

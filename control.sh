@@ -59,6 +59,19 @@ stop_services() {
         if ps -p $BACKEND_PID > /dev/null 2>&1; then
             info "停止后端服务 (PID: $BACKEND_PID)..."
             kill $BACKEND_PID 2>/dev/null || true
+            # 等待进程优雅关闭
+            for i in {1..10}; do
+                if ! ps -p $BACKEND_PID > /dev/null 2>&1; then
+                    break
+                fi
+                sleep 0.5
+            done
+            # 如果还在运行，强制杀掉
+            if ps -p $BACKEND_PID > /dev/null 2>&1; then
+                warn "后端进程未响应，强制停止..."
+                kill -9 $BACKEND_PID 2>/dev/null || true
+                sleep 1
+            fi
             success "后端已停止"
         fi
         rm -f "$BACKEND_PID_FILE"
@@ -70,6 +83,19 @@ stop_services() {
         if ps -p $FRONTEND_PID > /dev/null 2>&1; then
             info "停止前端服务 (PID: $FRONTEND_PID)..."
             kill $FRONTEND_PID 2>/dev/null || true
+            # 等待进程优雅关闭
+            for i in {1..10}; do
+                if ! ps -p $FRONTEND_PID > /dev/null 2>&1; then
+                    break
+                fi
+                sleep 0.5
+            done
+            # 如果还在运行，强制杀掉
+            if ps -p $FRONTEND_PID > /dev/null 2>&1; then
+                warn "前端进程未响应，强制停止..."
+                kill -9 $FRONTEND_PID 2>/dev/null || true
+                sleep 1
+            fi
             success "前端已停止"
         fi
         rm -f "$FRONTEND_PID_FILE"

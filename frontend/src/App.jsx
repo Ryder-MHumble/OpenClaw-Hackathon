@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import CursorClaw from "./components/CursorClaw";
+import ProtectedRoute from "./components/ProtectedRoute";
 import RoleSelection from "./pages/RoleSelection";
 import ParticipantRegistration from "./pages/ParticipantRegistration";
 import JudgeLogin from "./pages/JudgeLogin";
@@ -23,9 +24,30 @@ function App() {
             element={<ParticipantRegistration />}
           />
           <Route path="/judge/login" element={<JudgeLogin />} />
-          <Route path="/judge/dashboard" element={<JudgeDashboard />} />
-          <Route path="/judge/scoring/:teamId" element={<JudgeScoring />} />
-          <Route path="/judge/leaderboard" element={<Leaderboard />} />
+          <Route
+            path="/judge/dashboard"
+            element={
+              <ProtectedRoute>
+                <JudgeDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/judge/scoring/:teamId"
+            element={
+              <ProtectedRoute>
+                <JudgeScoring />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/judge/leaderboard"
+            element={
+              <ProtectedRoute>
+                <Leaderboard />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<RoleSelection />} />
         </Routes>
       </Router>

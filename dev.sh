@@ -25,7 +25,7 @@ stop_all() {
     header "🛑  停止所有服务..."
     echo "────────────────────────────────────"
 
-    # 停止 Backend（通过 PID 文件）
+    # 停止 Backend（仅通过 PID 文件，不按端口查找）
     if [ -f "$BACKEND_PID_FILE" ]; then
         BPID=$(cat "$BACKEND_PID_FILE")
         if kill -0 "$BPID" 2>/dev/null; then
@@ -35,26 +35,14 @@ stop_all() {
         fi
         rm -f "$BACKEND_PID_FILE"
     else
-        # 兜底：按端口杀进程
-        BPID=$(lsof -ti :8000 -sTCP:LISTEN 2>/dev/null || true)
-        if [ -n "$BPID" ]; then
-            kill "$BPID" && success "Backend 已停止 (PID: $BPID)"
-        else
-            warn "Backend 未在运行"
-        fi
+        warn "Backend 未在运行（无 PID 文件）"
     fi
 
-    # 停止 Frontend（tmux session）
+    # 停止 Frontend（仅通过 tmux session，不按端口查找）
     if tmux has-session -t openclaw-dev 2>/dev/null; then
         tmux kill-session -t openclaw-dev && success "Frontend 已停止 (tmux: openclaw-dev)"
     else
-        # 兜底：按端口杀进程
-        FPID=$(lsof -ti :3000 -sTCP:LISTEN 2>/dev/null || true)
-        if [ -n "$FPID" ]; then
-            kill "$FPID" && success "Frontend 已停止 (PID: $FPID)"
-        else
-            warn "Frontend 未在运行"
-        fi
+        warn "Frontend 未在运行（无 tmux session）"
     fi
 
     echo "────────────────────────────────────"
@@ -104,8 +92,15 @@ if [ ! -f "$BACKEND_DIR/venv/.deps_installed" ] || \
     touch "$BACKEND_DIR/venv/.deps_installed"
 fi
 
-if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    warn "端口 8000 已占用，跳过 Backend 启动"
+# 检查是否有真正的 Python 后端在运行（排除 VS Code 端口转发）
+EXISTING_BACKEND=$(lsof -ti :8000 -sTCP:LISTEN 2>/dev/null | while read pid; do
+    if ps -p "$pid" -o comm= | grep -qE "python|uvicorn"; then
+        echo "$pid"
+    fi
+done)
+
+if [ -n "$EXISTING_BACKEND" ]; then
+    warn "端口 8000 已被 Python 进程占用 (PID: $EXISTING_BACKEND)，跳过 Backend 启动"
 else
     cd "$BACKEND_DIR"
     python3 main.py &
@@ -123,8 +118,15 @@ if [ ! -d "$FRONTEND_DIR/node_modules" ]; then
     cd "$FRONTEND_DIR" && npm install && cd "$ROOT_DIR"
 fi
 
-if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    warn "端口 3000 已占用，跳过 Frontend 启动"
+# 检查是否有真正的 Node 前端在运行（排除 VS Code 端口转发）
+EXISTING_FRONTEND=$(lsof -ti :3000 -sTCP:LISTEN 2>/dev/null | while read pid; do
+    if ps -p "$pid" -o comm= | grep -qE "node|npm|vite"; then
+        echo "$pid"
+    fi
+done)
+
+if [ -n "$EXISTING_FRONTEND" ]; then
+    warn "端口 3000 已被 Node 进程占用 (PID: $EXISTING_FRONTEND)，跳过 Frontend 启动"
 else
     # 在 tmux session 中运行（保留日志可查看）
     if command -v tmux >/dev/null 2>&1; then

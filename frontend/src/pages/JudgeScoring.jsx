@@ -140,6 +140,7 @@ export default function JudgeScoring() {
 
   const [comments, setComments] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [materialsComplete, setMaterialsComplete] = useState(null); // null | true | false
   const [failedLoads, setFailedLoads] = useState({
     pdf: false,
     video: false,
@@ -241,6 +242,7 @@ export default function JudgeScoring() {
       await apiClient.patch(`/api/judges/participants/${teamId}/status`, {
         status: newStatus,
         comments: comments || undefined,
+        materials_complete: materialsComplete,
       });
 
       setModal({
@@ -355,7 +357,14 @@ export default function JudgeScoring() {
         title={modal.title}
         message={modal.message}
         onBack={() => navigate("/judge/dashboard")}
-        onNext={nextId ? () => navigate(`/judge/scoring/${nextId}`) : null}
+        onNext={
+          nextId
+            ? () => {
+                // Force page reload by navigating and resetting state
+                window.location.href = `/judge/scoring/${nextId}`;
+              }
+            : null
+        }
       />
 
       {/* Header */}
@@ -727,6 +736,54 @@ export default function JudgeScoring() {
                     <p className="text-sm text-slate-400">
                       请根据项目材料判断是否通过初筛
                     </p>
+                  </div>
+                </div>
+
+                {/* 材料完整性选项 */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-bold">
+                    材料完整性评估
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setMaterialsComplete(true)}
+                      className={`py-4 px-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                        materialsComplete === true
+                          ? "bg-green-500/20 border-green-500 text-green-300"
+                          : "bg-background-dark/30 border-white/10 text-slate-400 hover:border-green-500/50"
+                      }`}
+                    >
+                      <CheckCircle className="size-5" />
+                      <span className="text-sm font-bold">材料齐全</span>
+                      <span className="text-xs opacity-70">通过初筛</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMaterialsComplete(false)}
+                      className={`py-4 px-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                        materialsComplete === false
+                          ? "bg-red-500/20 border-red-500 text-red-300"
+                          : "bg-background-dark/30 border-white/10 text-slate-400 hover:border-red-500/50"
+                      }`}
+                    >
+                      <XCircle className="size-5" />
+                      <span className="text-sm font-bold">材料不齐全</span>
+                      <span className="text-xs opacity-70">严重问题</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMaterialsComplete(null)}
+                      className={`py-4 px-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                        materialsComplete === null
+                          ? "bg-amber-500/20 border-amber-500 text-amber-300"
+                          : "bg-background-dark/30 border-white/10 text-slate-400 hover:border-amber-500/50"
+                      }`}
+                    >
+                      <AlertTriangle className="size-5" />
+                      <span className="text-sm font-bold">待审核</span>
+                      <span className="text-xs opacity-70">有小问题</span>
+                    </button>
                   </div>
                 </div>
 

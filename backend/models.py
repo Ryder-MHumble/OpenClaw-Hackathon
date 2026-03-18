@@ -20,6 +20,7 @@ class RegisterRequest(BaseModel):
 class UpdateStatusRequest(BaseModel):
     status: str
     comments: Optional[str] = None
+    materials_complete: Optional[bool] = None
 
 
 class JudgeVoterLoginRequest(BaseModel):

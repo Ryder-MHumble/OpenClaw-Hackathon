@@ -29,3 +29,16 @@ def get_current_voter(credentials: HTTPAuthorizationCredentials = Depends(oauth2
         return {"id": int(voter_id), "type": voter_type}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+def get_current_judge(credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme)) -> dict:
+    """Dependency to get current judge from JWT token"""
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        role = payload.get("role")
+        if role != "judge":
+            raise HTTPException(status_code=403, detail="Not authorized")
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")

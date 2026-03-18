@@ -1,13 +1,19 @@
 from datetime import datetime
 from typing import Optional
+from io import BytesIO
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Header
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill
+from jose import JWTError, jwt
 
 from database import supabase
 from models import RegisterRequest, UpdateStatusRequest
 from services.url_validator import validate_url
 from services.email_service import audit_and_notify
+from config import SECRET_KEY, ALGORITHM
 
 router = APIRouter()
 
@@ -121,9 +127,14 @@ async def get_participants(status: Optional[str] = None):
 
 
 @router.get("/api/judges/participants/stats/tracks")
-async def get_track_stats():
+async def get_track_stats(status: Optional[str] = None):
+    """获取赛道统计，可选按状态过滤"""
     try:
-        result = supabase.table("participants").select("track").execute()
+        query = supabase.table("participants").select("track")
+        if status:
+            query = query.eq("status", status)
+        result = query.execute()
+
         counts = {}
         for p in result.data:
             track = p.get("track") or "未分类"
@@ -145,10 +156,16 @@ async def update_participant_status(participant_id: int, body: UpdateStatusReque
         if body.status not in valid_statuses:
             raise HTTPException(status_code=400, detail="Invalid status")
 
-        result = supabase.table("participants").update({
+        update_data = {
             "status": body.status,
             "updated_at": datetime.utcnow().isoformat()
-        }).eq("id", participant_id).execute()
+        }
+
+        # 更新材料完整性字段
+        if body.materials_complete is not None:
+            update_data["materials_complete"] = body.materials_complete
+
+        result = supabase.table("participants").update(update_data).eq("id", participant_id).execute()
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Participant not found")
@@ -217,5 +234,134 @@ async def delete_participant(participant_id: int):
         return {"message": "Participant deleted successfully", "data": result.data}
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/judges/participants/export/excel")
+async def export_participants_excel(authorization: Optional[str] = Header(None)):
+    """导出参赛者评审情况为Excel"""
+    # 验证 token
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="未授权")
+
+    token = authorization.replace("Bearer ", "")
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("role") != "judge":
+            raise HTTPException(status_code=403, detail="权限不足")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="无效的令牌")
+
+    try:
+        # 获取所有参赛者数据
+        result = supabase.table("participants").select("*").order("id").execute()
+        participants = result.data
+
+        # 创建Excel工作簿
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "参赛者评审情况"
+
+        # 设置表头
+        headers = [
+            "ID", "姓名", "邮箱", "机构", "赛道", "项目标题", "项目描述",
+            "Demo链接", "代码仓库", "PDF文档", "视频链接", "海报链接",
+            "材料是否齐全", "是否通过", "备注信息", "提交时间"
+        ]
+
+        # 写入表头并设置样式
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF")
+
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        # 写入数据
+        track_map = {
+            "academic": "学术龙虾",
+            "productivity": "生产力龙虾",
+            "life": "生活龙虾"
+        }
+
+        status_map = {
+            "pending": "待评审",
+            "reviewing": "评审中",
+            "scored": "已评分",
+            "rejected": "已拒绝"
+        }
+
+        for row_num, p in enumerate(participants, 2):
+            # 材料是否齐全
+            materials_status = ""
+            if p.get("materials_complete") is True:
+                materials_status = "齐全"
+            elif p.get("materials_complete") is False:
+                materials_status = "不齐全"
+            else:
+                materials_status = "待审核"
+
+            # 是否通过
+            pass_status = ""
+            if p.get("status") == "reviewing":
+                pass_status = "通过"
+            elif p.get("status") == "rejected":
+                pass_status = "不通过"
+            else:
+                pass_status = "待定"
+
+            # 备注信息（从scores表获取）
+            comments = ""
+            try:
+                score_result = supabase.table("scores").select("comments").eq("participant_id", p["id"]).execute()
+                if score_result.data:
+                    comments = score_result.data[0].get("comments", "")
+            except:
+                pass
+
+            row_data = [
+                p.get("id"),
+                p.get("full_name"),
+                p.get("email"),
+                p.get("organization"),
+                track_map.get(p.get("track"), p.get("track", "")),
+                p.get("project_title"),
+                p.get("project_description"),
+                p.get("demo_url", ""),
+                p.get("repo_url", ""),
+                p.get("pdf_url", ""),
+                p.get("video_url", ""),
+                p.get("poster_url", ""),
+                materials_status,
+                pass_status,
+                comments,
+                p.get("created_at", "")
+            ]
+
+            for col_num, value in enumerate(row_data, 1):
+                cell = ws.cell(row=row_num, column=col_num, value=value)
+                cell.alignment = Alignment(vertical="center", wrap_text=True)
+
+        # 调整列宽
+        column_widths = [8, 12, 25, 20, 15, 30, 40, 35, 35, 35, 35, 35, 15, 12, 40, 20]
+        for col_num, width in enumerate(column_widths, 1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col_num)].width = width
+
+        # 保存到内存
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        # 返回文件
+        filename = f"participants_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

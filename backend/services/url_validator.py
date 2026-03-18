@@ -48,12 +48,15 @@ async def check_accessibility(url: str) -> Optional[str]:
         headers = {"User-Agent": "Mozilla/5.0 (compatible; OpenClaw-Auditor/1.0)"}
 
         # 飞书/钉钉/腾讯文档等协作平台，即使返回 401/403 也可能是正常的（需要扫码登录）
+        # B站/YouTube等视频平台，可能有反爬虫机制返回 412/403，但链接本身是有效的
         # 这些平台的链接只要能访问到页面就算有效
         collaborative_platforms = [
             "feishu.cn", "larksuite.com",  # 飞书
             "alidocs.dingtalk.com",  # 钉钉
             "docs.qq.com",  # 腾讯文档
             "notion.so",  # Notion
+            "bilibili.com", "b23.tv",  # B站
+            "youtube.com", "youtu.be",  # YouTube
         ]
 
         is_collaborative = any(platform in url for platform in collaborative_platforms)
@@ -63,10 +66,10 @@ async def check_accessibility(url: str) -> Optional[str]:
             if resp.status_code in (405, 501):
                 resp = await client.get(url, headers=headers)
 
-            # 对于协作平台，只要不是 404/500 等明确的错误，都认为是可访问的
+            # 对于协作平台和视频平台，只要不是 404/500 等明确的错误，都认为是可访问的
             if is_collaborative:
-                if resp.status_code in (401, 403):
-                    # 401/403 对于协作平台是正常的，表示需要登录/扫码
+                if resp.status_code in (401, 403, 412):
+                    # 401/403/412 对于这些平台是正常的，表示需要登录/扫码或反爬虫
                     return None
                 elif resp.status_code == 404:
                     return "链接不存在（404），请检查链接是否正确"

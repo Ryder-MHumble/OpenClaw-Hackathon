@@ -160,6 +160,26 @@ export default function JudgeScoring() {
   }, []);
 
   useEffect(() => {
+    setModal({
+      show: false,
+      type: "",
+      title: "",
+      message: "",
+    });
+    setParticipant(null);
+    setExistingScore(null);
+    setComments("");
+    setMaterialsComplete(null);
+    setLoadingStates({
+      pdf: true,
+      video: true,
+      poster: true,
+    });
+    setFailedLoads({
+      pdf: false,
+      video: false,
+      poster: false,
+    });
     fetchParticipant();
   }, [teamId]);
 

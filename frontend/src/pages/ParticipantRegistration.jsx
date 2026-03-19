@@ -193,9 +193,12 @@ export default function ParticipantRegistration() {
             </p>
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
               为防止临近截止提交量过大造成网络不稳定，新增邮箱投稿备选通道：
-              <span className="font-bold text-amber-300">
+              <a
+                href="mailto:claw@bza.edu.cn"
+                className="font-bold text-amber-300 underline decoration-amber-300/50 underline-offset-2 hover:text-amber-200"
+              >
                 【中关村北纬龙虾大赛组委会】claw@bza.edu.cn
-              </span>
+              </a>
               。
             </p>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-2">

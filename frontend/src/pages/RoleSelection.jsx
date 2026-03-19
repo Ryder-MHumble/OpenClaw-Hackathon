@@ -707,7 +707,12 @@ export default function RoleSelection() {
               </p>
               <p className="text-[10px] sm:text-xs text-slate-300 leading-relaxed">
                 若网站拥堵，请改用邮箱投稿：
-                <span className="text-amber-300 font-semibold">claw@bza.edu.cn</span>
+                <a
+                  href="mailto:claw@bza.edu.cn"
+                  className="text-amber-300 font-semibold underline decoration-amber-300/50 underline-offset-2 hover:text-amber-200"
+                >
+                  claw@bza.edu.cn
+                </a>
                 （中关村北纬龙虾大赛组委会）。
               </p>
               <p className="text-[10px] sm:text-xs text-slate-400 leading-relaxed mt-1">

@@ -29,25 +29,18 @@ async def check_url_accessibility(body: CheckUrlRequest):
         # 仅做前端格式校验
         validation_error = validate_url(body.url, "url")
         if validation_error and validation_error.get("level") == "error":
-            return {
-                "accessible": False,
-                "error": validation_error.get("message")
-            }
+            return {"accessible": False, "error": validation_error.get("message")}
 
         # 直接返回成功，不做后端可访问性检查
-        return {
-            "accessible": True,
-            "message": "链接格式正确"
-        }
+        return {"accessible": True, "message": "链接格式正确"}
     except Exception as e:
-        return {
-            "accessible": False,
-            "error": f"检查失败：{str(e)}"
-        }
+        return {"accessible": False, "error": f"检查失败：{str(e)}"}
 
 
 @router.post("/api/participants/register")
-async def register_participant(body: RegisterRequest, background_tasks: BackgroundTasks):
+async def register_participant(
+    body: RegisterRequest, background_tasks: BackgroundTasks
+):
     url_issues = []
     for field, value in [
         ("pdfUrl", body.pdfUrl),
@@ -64,8 +57,10 @@ async def register_participant(body: RegisterRequest, background_tasks: Backgrou
     if errors:
         raise HTTPException(
             status_code=422,
-            detail={"url_errors": errors,
-                    "message": "提交的链接存在问题，请修正后重新提交"}
+            detail={
+                "url_errors": errors,
+                "message": "提交的链接存在问题，请修正后重新提交",
+            },
         )
 
     try:
@@ -82,7 +77,7 @@ async def register_participant(body: RegisterRequest, background_tasks: Backgrou
             "pdf_url": body.pdfUrl or None,
             "video_url": body.videoUrl or None,
             "poster_url": body.posterUrl or None,
-            "status": "pending"
+            "status": "pending",
         }
 
         result = supabase.table("participants").insert(data).execute()
@@ -93,11 +88,11 @@ async def register_participant(body: RegisterRequest, background_tasks: Backgrou
             email=body.email,
             project_title=body.projectTitle,
             url_fields={
-                "pdfUrl":    body.pdfUrl,
+                "pdfUrl": body.pdfUrl,
                 "posterUrl": body.posterUrl,
-                "videoUrl":  body.videoUrl,
-                "repoUrl":   body.repoUrl,
-                "demoUrl":   body.demoUrl,
+                "videoUrl": body.videoUrl,
+                "repoUrl": body.repoUrl,
+                "demoUrl": body.demoUrl,
             },
         )
 
@@ -142,7 +137,7 @@ async def get_track_stats(status: Optional[str] = None):
         total = sum(counts.values())
         return {
             "data": [{"track": t, "count": c} for t, c in sorted(counts.items())],
-            "total": total
+            "total": total,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -158,30 +153,37 @@ async def update_participant_status(participant_id: int, body: UpdateStatusReque
 
         update_data = {
             "status": body.status,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat(),
         }
 
         # 更新材料完整性字段
         if body.materials_complete is not None:
             update_data["materials_complete"] = body.materials_complete
 
-        result = supabase.table("participants").update(update_data).eq("id", participant_id).execute()
+        result = (
+            supabase.table("participants")
+            .update(update_data)
+            .eq("id", participant_id)
+            .execute()
+        )
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Participant not found")
 
         if body.comments and body.status == "rejected":
-            supabase.table("scores").insert({
-                "participant_id": participant_id,
-                "judge_id": None,
-                "innovation_score": 0,
-                "technical_score": 0,
-                "market_score": 0,
-                "demo_score": 0,
-                "weighted_score": 0,
-                "comments": f"初筛不通过: {body.comments}",
-                "created_at": datetime.utcnow().isoformat()
-            }).execute()
+            supabase.table("scores").insert(
+                {
+                    "participant_id": participant_id,
+                    "judge_id": None,
+                    "innovation_score": 0,
+                    "technical_score": 0,
+                    "market_score": 0,
+                    "demo_score": 0,
+                    "weighted_score": 0,
+                    "comments": f"初筛不通过: {body.comments}",
+                    "created_at": datetime.utcnow().isoformat(),
+                }
+            ).execute()
 
         return {"message": "Status updated successfully", "data": result.data}
 
@@ -213,7 +215,12 @@ async def get_next_participant(participant_id: int, status: Optional[str] = None
 @router.get("/api/judges/participants/{participant_id}")
 async def get_participant(participant_id: int):
     try:
-        result = supabase.table("participants").select("*").eq("id", participant_id).execute()
+        result = (
+            supabase.table("participants")
+            .select("*")
+            .eq("id", participant_id)
+            .execute()
+        )
         if not result.data:
             raise HTTPException(status_code=404, detail="Participant not found")
         return {"data": result.data[0]}
@@ -226,7 +233,9 @@ async def delete_participant(participant_id: int):
     """删除参赛者及其相关评分记录"""
     try:
         supabase.table("scores").delete().eq("participant_id", participant_id).execute()
-        result = supabase.table("participants").delete().eq("id", participant_id).execute()
+        result = (
+            supabase.table("participants").delete().eq("id", participant_id).execute()
+        )
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Participant not found")
@@ -265,13 +274,25 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
 
         # 设置表头（移除姓名和机构以保证评审公平性）
         headers = [
-            "ID", "赛道", "项目标题", "项目描述",
-            "Demo链接", "代码仓库", "PDF文档", "视频链接", "海报链接",
-            "材料是否齐全", "是否通过", "备注信息", "提交时间"
+            "ID",
+            "赛道",
+            "项目标题",
+            "项目描述",
+            "Demo链接",
+            "代码仓库",
+            "PDF文档",
+            "视频链接",
+            "海报链接",
+            "材料是否齐全",
+            "是否通过",
+            "备注信息",
+            "提交时间",
         ]
 
         # 写入表头并设置样式
-        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_fill = PatternFill(
+            start_color="4472C4", end_color="4472C4", fill_type="solid"
+        )
         header_font = Font(bold=True, color="FFFFFF")
 
         for col_num, header in enumerate(headers, 1):
@@ -284,14 +305,14 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
         track_map = {
             "academic": "学术龙虾",
             "productivity": "生产力龙虾",
-            "life": "生活龙虾"
+            "life": "生活龙虾",
         }
 
         status_map = {
             "pending": "待评审",
             "reviewing": "评审中",
             "scored": "已评分",
-            "rejected": "已拒绝"
+            "rejected": "已拒绝",
         }
 
         for row_num, p in enumerate(participants, 2):
@@ -313,13 +334,23 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
             else:
                 pass_status = "待定"
 
-            # 备注信息（从scores表获取）
+            # 备注信息（从scores表获取最近一条非空备注）
             comments = ""
             try:
-                score_result = supabase.table("scores").select("comments").eq("participant_id", p["id"]).execute()
+                score_result = (
+                    supabase.table("scores")
+                    .select("comments, created_at")
+                    .eq("participant_id", p["id"])
+                    .order("created_at", desc=True)
+                    .execute()
+                )
                 if score_result.data:
-                    comments = score_result.data[0].get("comments", "")
-            except:
+                    for score in score_result.data:
+                        text = (score.get("comments") or "").strip()
+                        if text:
+                            comments = text
+                            break
+            except Exception:
                 pass
 
             row_data = [
@@ -335,7 +366,7 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
                 materials_status,
                 pass_status,
                 comments,
-                p.get("created_at", "")
+                p.get("created_at", ""),
             ]
 
             for col_num, value in enumerate(row_data, 1):
@@ -345,7 +376,9 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
         # 调整列宽
         column_widths = [8, 15, 30, 40, 35, 35, 35, 35, 35, 15, 12, 40, 20]
         for col_num, width in enumerate(column_widths, 1):
-            ws.column_dimensions[openpyxl.utils.get_column_letter(col_num)].width = width
+            ws.column_dimensions[
+                openpyxl.utils.get_column_letter(col_num)
+            ].width = width
 
         # 保存到内存
         output = BytesIO()
@@ -357,7 +390,7 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
         return StreamingResponse(
             output,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
 
     except Exception as e:

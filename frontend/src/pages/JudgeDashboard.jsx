@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   LayoutGrid,
@@ -29,8 +29,19 @@ import { API_BASE_URL } from "../config/api";
 import LobsterLogo from "../components/LobsterLogo";
 
 export default function JudgeDashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const STATUS_TABS = ["all", "pending", "reviewing", "rejected"];
+  const initialStatus = searchParams.get("status");
+  const savedStatus = localStorage.getItem("judge_dashboard_status_tab");
+
   const [participants, setParticipants] = useState([]);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(
+    STATUS_TABS.includes(initialStatus)
+      ? initialStatus
+      : STATUS_TABS.includes(savedStatus)
+        ? savedStatus
+        : "all",
+  );
   const [trackFilter, setTrackFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,6 +72,22 @@ export default function JudgeDashboard() {
     fetchParticipants();
     setCurrentPage(1);
   }, [filter, trackFilter]);
+
+  useEffect(() => {
+    localStorage.setItem("judge_dashboard_status_tab", filter);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (filter === "all") {
+          next.delete("status");
+        } else {
+          next.set("status", filter);
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  }, [filter, setSearchParams]);
 
   const fetchStats = async () => {
     try {

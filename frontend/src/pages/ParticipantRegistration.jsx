@@ -181,6 +181,27 @@ export default function ParticipantRegistration() {
               </p>
             </div>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.45 }}
+            className="mt-4 rounded-2xl border border-amber-400/35 bg-amber-500/10 px-4 py-4 sm:px-5"
+          >
+            <p className="text-sm sm:text-base font-bold text-amber-300 mb-2">
+              重要通知（报名高峰期）
+            </p>
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+              为防止临近截止提交量过大造成网络不稳定，新增邮箱投稿备选通道：
+              <span className="font-bold text-amber-300">
+                【中关村北纬龙虾大赛组委会】claw@bza.edu.cn
+              </span>
+              。
+            </p>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-2">
+              另外，决赛名单预计明天发布，请所有选手保持邮箱和电话畅通。
+            </p>
+          </motion.div>
         </section>
 
         {/* Form area */}

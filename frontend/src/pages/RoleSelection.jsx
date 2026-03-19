@@ -696,6 +696,25 @@ export default function RoleSelection() {
             {/* Divider */}
             <div className="h-px bg-gradient-to-r from-primary/20 via-primary/10 to-transparent mb-4" />
 
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.45 }}
+              className="mb-4 lg:mb-5 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-3"
+            >
+              <p className="text-[11px] sm:text-xs text-amber-300 font-bold mb-1.5">
+                报名高峰提醒
+              </p>
+              <p className="text-[10px] sm:text-xs text-slate-300 leading-relaxed">
+                若网站拥堵，请改用邮箱投稿：
+                <span className="text-amber-300 font-semibold">claw@bza.edu.cn</span>
+                （中关村北纬龙虾大赛组委会）。
+              </p>
+              <p className="text-[10px] sm:text-xs text-slate-400 leading-relaxed mt-1">
+                决赛名单预计明天发布，请保持联系方式畅通。
+              </p>
+            </motion.div>
+
             {/* Organizers + terms */}
             <motion.div
               initial={{ opacity: 0 }}

@@ -292,6 +292,30 @@ export default function JudgeScoring() {
     }
   };
 
+  const handleGoNextProject = async () => {
+    try {
+      let targetId = nextId;
+
+      // Fallback: re-fetch next id at click time
+      if (!targetId || Number(targetId) === Number(teamId)) {
+        const nextRes = await apiClient.get(`/api/judges/participants/${teamId}/next`);
+        targetId = nextRes?.data?.data?.next_id ?? null;
+      }
+
+      setModal((prev) => ({ ...prev, show: false }));
+
+      if (targetId && Number(targetId) !== Number(teamId)) {
+        window.location.assign(`/judge/scoring/${targetId}`);
+        return;
+      }
+
+      navigate("/judge/dashboard?status=pending");
+    } catch (error) {
+      console.error("Go next project failed:", error);
+      navigate("/judge/dashboard?status=pending");
+    }
+  };
+
   const weightedScore = (
     scores.innovation * 0.3 +
     scores.technical * 0.3 +
@@ -353,7 +377,7 @@ export default function JudgeScoring() {
         title={modal.title}
         message={modal.message}
         onBack={() => navigate("/judge/dashboard")}
-        onNext={nextId ? () => navigate(`/judge/scoring/${nextId}`) : null}
+        onNext={nextId ? handleGoNextProject : null}
       />
 
       {/* Header */}

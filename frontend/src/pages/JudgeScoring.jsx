@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -128,7 +128,6 @@ export default function JudgeScoring() {
     video: true,
     poster: true,
   });
-  const fetchedRef = useRef(false);
 
   // 评分状态
   const [scores, setScores] = useState({
@@ -161,10 +160,7 @@ export default function JudgeScoring() {
   }, []);
 
   useEffect(() => {
-    if (!fetchedRef.current) {
-      fetchedRef.current = true;
-      fetchParticipant();
-    }
+    fetchParticipant();
   }, [teamId]);
 
   const fetchParticipant = async () => {
@@ -357,14 +353,7 @@ export default function JudgeScoring() {
         title={modal.title}
         message={modal.message}
         onBack={() => navigate("/judge/dashboard")}
-        onNext={
-          nextId
-            ? () => {
-                // Force page reload by navigating and resetting state
-                window.location.href = `/judge/scoring/${nextId}`;
-              }
-            : null
-        }
+        onNext={nextId ? () => navigate(`/judge/scoring/${nextId}`) : null}
       />
 
       {/* Header */}

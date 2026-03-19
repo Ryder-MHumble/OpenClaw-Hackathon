@@ -7,6 +7,7 @@ import JudgeLogin from "./pages/JudgeLogin";
 import JudgeDashboard from "./pages/JudgeDashboard";
 import JudgeScoring from "./pages/JudgeScoring";
 import Leaderboard from "./pages/Leaderboard";
+import JudgeRoadshowScoring from "./pages/JudgeRoadshowScoring";
 import { useIsMobile } from "./utils/deviceDetect";
 
 function App() {
@@ -45,6 +46,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Leaderboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/judge/roadshow-scoring"
+            element={
+              <ProtectedRoute>
+                <JudgeRoadshowScoring />
               </ProtectedRoute>
             }
           />

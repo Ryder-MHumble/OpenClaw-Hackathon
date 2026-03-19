@@ -21,9 +21,24 @@ export default function ParticipantRegistration() {
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [termsOpen, setTermsOpen] = useState(false);
+  const [registrationClosed, setRegistrationClosed] = useState(false);
+  const [registrationCloseAt, setRegistrationCloseAt] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    const fetchRegistrationStatus = async () => {
+      try {
+        const res = await apiClient.get("/api/participants/registration-status");
+        setRegistrationClosed(!!res?.data?.closed);
+        setRegistrationCloseAt(res?.data?.close_at || "");
+      } catch (error) {
+        console.error("Failed to fetch registration status:", error);
+      }
+    };
+    fetchRegistrationStatus();
   }, []);
 
   const [formData, setFormData] = useState({
@@ -70,6 +85,10 @@ export default function ParticipantRegistration() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (registrationClosed) {
+      setSubmitError("报名已截止，当前无法提交。");
+      return;
+    }
     if (!agreed) return;
 
     // 检查 URL 验证状态
@@ -150,6 +169,26 @@ export default function ParticipantRegistration() {
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-background-dark text-slate-100 font-display overflow-x-hidden">
       <TermsModal open={termsOpen} onClose={() => setTermsOpen(false)} />
+      {registrationClosed && (
+        <div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="max-w-xl w-full rounded-2xl border border-red-400/30 bg-[#1a0f0f] p-6 sm:p-8 text-center shadow-2xl">
+            <p className="text-red-300 text-sm font-bold mb-2">报名通道已关闭</p>
+            <h2 className="text-2xl sm:text-3xl font-black mb-3">本届报名已截止</h2>
+            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+              很抱歉，报名时间已结束。系统已暂停注册功能与提交接口。
+            </p>
+            <p className="text-xs text-slate-500 mt-3">
+              截止时间：{registrationCloseAt || "2026-03-20 00:00:00 +08:00"}
+            </p>
+            <button
+              onClick={() => navigate("/")}
+              className="mt-6 px-6 py-2.5 rounded-lg bg-primary text-white font-bold hover:bg-primary/85 transition-colors"
+            >
+              返回首页
+            </button>
+          </div>
+        </div>
+      )}
       <Header navigate={navigate} />
       <MobileStepBar currentStep={currentStep} />
 

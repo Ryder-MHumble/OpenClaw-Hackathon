@@ -1,8 +1,15 @@
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, timezone
+import asyncio
+from dataclasses import dataclass
+import logging
+import random
+import time
+from typing import Any, Optional
 from io import BytesIO
+from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Header
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import openpyxl
@@ -13,19 +20,330 @@ from database import supabase
 from models import RegisterRequest, UpdateStatusRequest
 from services.url_validator import validate_url
 from services.email_service import audit_and_notify
-from config import SECRET_KEY, ALGORITHM
+from config import (
+    SECRET_KEY,
+    ALGORITHM,
+    REGISTER_DB_TIMEOUT_SECONDS,
+    REGISTER_DB_MAX_RETRIES,
+    REGISTER_DB_RETRY_BASE_DELAY,
+    REGISTER_DB_RETRY_JITTER,
+    REGISTER_DB_MAX_CONCURRENCY,
+    REGISTER_DB_QUEUE_WAIT_SECONDS,
+    REGISTER_ASYNC_QUEUE_ENABLED,
+    REGISTER_ASYNC_QUEUE_MAXSIZE,
+    REGISTER_ASYNC_QUEUE_WORKERS,
+    REGISTER_ASYNC_QUEUE_RETRY_LIMIT,
+    REGISTRATION_CLOSE_AT,
+    REGISTRATION_FORCE_CLOSED,
+    REGISTRATION_CLOSED_FLAG_FILE,
+)
 
 router = APIRouter()
+logger = logging.getLogger("register_service")
+_REGISTER_WRITE_SEMAPHORE = asyncio.Semaphore(max(1, REGISTER_DB_MAX_CONCURRENCY))
+_REGISTER_FALLBACK_QUEUE: Optional[asyncio.Queue] = None
+_REGISTER_QUEUE_WORKERS: list[asyncio.Task] = []
+
+
+def _parse_close_at() -> Optional[datetime]:
+    try:
+        parsed = datetime.fromisoformat(REGISTRATION_CLOSE_AT)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    except Exception:
+        logger.warning("Invalid REGISTRATION_CLOSE_AT: %s", REGISTRATION_CLOSE_AT)
+        return None
+
+
+_REGISTRATION_CLOSE_AT_UTC = _parse_close_at()
+
+
+def _is_registration_closed() -> bool:
+    if REGISTRATION_FORCE_CLOSED:
+        return True
+
+    flag_path = Path(REGISTRATION_CLOSED_FLAG_FILE)
+    if flag_path.exists():
+        return True
+
+    if _REGISTRATION_CLOSE_AT_UTC is None:
+        return False
+
+    return datetime.now(timezone.utc) >= _REGISTRATION_CLOSE_AT_UTC
+
+
+def _registration_status_payload() -> dict[str, object]:
+    return {
+        "closed": _is_registration_closed(),
+        "close_at": REGISTRATION_CLOSE_AT,
+        "message": "报名已截止" if _is_registration_closed() else "报名进行中",
+    }
+
+
+@dataclass
+class RegisterQueueJob:
+    table_name: str
+    data: dict[str, object]
+    endpoint: str
+    attempt: int = 0
+
+
+def _queue_enabled() -> bool:
+    return REGISTER_ASYNC_QUEUE_ENABLED
+
+
+async def _start_register_queue_workers() -> None:
+    global _REGISTER_FALLBACK_QUEUE
+    if not _queue_enabled() or _REGISTER_QUEUE_WORKERS:
+        return
+
+    _REGISTER_FALLBACK_QUEUE = asyncio.Queue(
+        maxsize=max(1, REGISTER_ASYNC_QUEUE_MAXSIZE)
+    )
+
+    async def _worker(worker_id: int):
+        assert _REGISTER_FALLBACK_QUEUE is not None
+        while True:
+            job: RegisterQueueJob = await _REGISTER_FALLBACK_QUEUE.get()
+            try:
+                await _insert_with_resilience(
+                    table_name=job.table_name,
+                    data=job.data,
+                    endpoint=f"{job.endpoint}_queued",
+                )
+                logger.info(
+                    "register_queue_job_ok worker=%d endpoint=%s table=%s attempt=%d",
+                    worker_id,
+                    job.endpoint,
+                    job.table_name,
+                    job.attempt,
+                )
+            except HTTPException as exc:
+                retryable = exc.status_code in (429, 503)
+                if retryable and job.attempt < REGISTER_ASYNC_QUEUE_RETRY_LIMIT:
+                    job.attempt += 1
+                    delay = min(
+                        2.0, REGISTER_DB_RETRY_BASE_DELAY * (2 ** (job.attempt - 1))
+                    )
+                    delay += random.uniform(0.0, REGISTER_DB_RETRY_JITTER)
+                    await asyncio.sleep(delay)
+                    await _REGISTER_FALLBACK_QUEUE.put(job)
+                    logger.warning(
+                        "register_queue_job_retry worker=%d endpoint=%s table=%s attempt=%d status=%d",
+                        worker_id,
+                        job.endpoint,
+                        job.table_name,
+                        job.attempt,
+                        exc.status_code,
+                    )
+                else:
+                    logger.error(
+                        "register_queue_job_drop worker=%d endpoint=%s table=%s attempt=%d status=%d",
+                        worker_id,
+                        job.endpoint,
+                        job.table_name,
+                        job.attempt,
+                        exc.status_code,
+                    )
+            except Exception as exc:
+                logger.error(
+                    "register_queue_job_exception worker=%d endpoint=%s table=%s error=%s",
+                    worker_id,
+                    job.endpoint,
+                    job.table_name,
+                    str(exc),
+                )
+            finally:
+                _REGISTER_FALLBACK_QUEUE.task_done()
+
+    for idx in range(max(1, REGISTER_ASYNC_QUEUE_WORKERS)):
+        _REGISTER_QUEUE_WORKERS.append(asyncio.create_task(_worker(idx + 1)))
+
+    logger.info(
+        "register_queue_started enabled=%s workers=%d maxsize=%d",
+        _queue_enabled(),
+        len(_REGISTER_QUEUE_WORKERS),
+        REGISTER_ASYNC_QUEUE_MAXSIZE,
+    )
+
+
+async def _stop_register_queue_workers() -> None:
+    if not _REGISTER_QUEUE_WORKERS:
+        return
+    for task in _REGISTER_QUEUE_WORKERS:
+        task.cancel()
+    await asyncio.gather(*_REGISTER_QUEUE_WORKERS, return_exceptions=True)
+    _REGISTER_QUEUE_WORKERS.clear()
+    logger.info("register_queue_stopped")
+
+
+async def initialize_participant_services() -> None:
+    await _start_register_queue_workers()
+
+
+async def shutdown_participant_services() -> None:
+    await _stop_register_queue_workers()
+
+
+async def _enqueue_fallback_job(
+    *,
+    table_name: str,
+    data: dict[str, object],
+    endpoint: str,
+) -> int:
+    if not _queue_enabled() or _REGISTER_FALLBACK_QUEUE is None:
+        raise HTTPException(
+            status_code=429,
+            detail="报名高峰中，请稍后重试（建议30秒后重试）",
+        )
+    if _REGISTER_FALLBACK_QUEUE.full():
+        logger.warning(
+            "register_queue_full endpoint=%s table=%s size=%d",
+            endpoint,
+            table_name,
+            _REGISTER_FALLBACK_QUEUE.qsize(),
+        )
+        raise HTTPException(
+            status_code=429,
+            detail="报名请求过多，请稍后重试（建议30秒后重试）",
+        )
+
+    await _REGISTER_FALLBACK_QUEUE.put(
+        RegisterQueueJob(table_name=table_name, data=data, endpoint=endpoint)
+    )
+    size = _REGISTER_FALLBACK_QUEUE.qsize()
+    logger.info(
+        "register_queue_enqueue endpoint=%s table=%s queue_size=%d",
+        endpoint,
+        table_name,
+        size,
+    )
+    return size
+
+
+def _is_retryable_db_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    markers = [
+        "timeout",
+        "timed out",
+        "too many requests",
+        "connection reset",
+        "connection aborted",
+        "connection error",
+        "connection pool",
+        "code': '429'",
+        'code": "429"',
+        " 429",
+        " 502",
+        " 503",
+        " 504",
+        "server closed",
+        "temporarily",
+    ]
+    return any(m in text for m in markers)
+
+
+async def _insert_with_resilience(
+    *,
+    table_name: str,
+    data: dict[str, object],
+    endpoint: str,
+) -> Any:
+    start_wait = time.perf_counter()
+    try:
+        await asyncio.wait_for(
+            _REGISTER_WRITE_SEMAPHORE.acquire(),
+            timeout=REGISTER_DB_QUEUE_WAIT_SECONDS,
+        )
+    except asyncio.TimeoutError:
+        logger.warning(
+            "register_db_queue_timeout endpoint=%s table=%s wait_timeout=%.2f inflight_limit=%d",
+            endpoint,
+            table_name,
+            REGISTER_DB_QUEUE_WAIT_SECONDS,
+            REGISTER_DB_MAX_CONCURRENCY,
+        )
+        raise HTTPException(
+            status_code=429,
+            detail="报名高峰中，请稍后重试（建议30秒后重试）",
+        )
+
+    wait_ms = (time.perf_counter() - start_wait) * 1000
+    try:
+        last_error: Optional[Exception] = None
+        for attempt in range(1, REGISTER_DB_MAX_RETRIES + 2):
+            t0 = time.perf_counter()
+            try:
+                result = await asyncio.wait_for(
+                    run_in_threadpool(
+                        lambda: supabase.table(table_name).insert(data).execute()
+                    ),
+                    timeout=REGISTER_DB_TIMEOUT_SECONDS,
+                )
+                elapsed_ms = (time.perf_counter() - t0) * 1000
+                logger.info(
+                    "register_db_ok endpoint=%s table=%s attempt=%d wait_ms=%.2f db_ms=%.2f",
+                    endpoint,
+                    table_name,
+                    attempt,
+                    wait_ms,
+                    elapsed_ms,
+                )
+                return result
+            except asyncio.TimeoutError as exc:
+                last_error = exc
+                retryable = True
+                reason = "timeout"
+            except Exception as exc:
+                last_error = exc
+                retryable = _is_retryable_db_error(exc)
+                reason = "retryable" if retryable else "non_retryable"
+
+            logger.warning(
+                "register_db_fail endpoint=%s table=%s attempt=%d reason=%s error=%s",
+                endpoint,
+                table_name,
+                attempt,
+                reason,
+                str(last_error),
+            )
+
+            if not retryable or attempt >= REGISTER_DB_MAX_RETRIES + 1:
+                raise HTTPException(
+                    status_code=503,
+                    detail="服务繁忙，请稍后重试",
+                )
+
+            backoff = REGISTER_DB_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+            jitter = random.uniform(0.0, REGISTER_DB_RETRY_JITTER)
+            await asyncio.sleep(backoff + jitter)
+
+        raise HTTPException(status_code=503, detail="服务繁忙，请稍后重试")
+    finally:
+        _REGISTER_WRITE_SEMAPHORE.release()
 
 
 class CheckUrlRequest(BaseModel):
     url: str
 
 
+@router.get("/api/participants/registration-status")
+async def get_registration_status():
+    return _registration_status_payload()
+
+
 @router.post("/api/participants/check-url")
 async def check_url_accessibility(body: CheckUrlRequest):
     """检查 URL 格式（仅前端格式校验，不做可访问性检查）"""
     try:
+        if _is_registration_closed():
+            return {
+                "accessible": False,
+                "error": "报名已截止",
+                "registration_closed": True,
+            }
+
         # 仅做前端格式校验
         validation_error = validate_url(body.url, "url")
         if validation_error and validation_error.get("level") == "error":
@@ -41,6 +359,9 @@ async def check_url_accessibility(body: CheckUrlRequest):
 async def register_participant(
     body: RegisterRequest, background_tasks: BackgroundTasks
 ):
+    if _is_registration_closed():
+        raise HTTPException(status_code=403, detail="报名已截止")
+
     url_issues = []
     for field, value in [
         ("pdfUrl", body.pdfUrl),
@@ -63,24 +384,28 @@ async def register_participant(
             },
         )
 
-    try:
-        data = {
-            "full_name": body.fullName,
-            "email": body.email,
-            "organization": body.organization,
-            "github": body.phone,
-            "track": body.track or None,
-            "project_title": body.projectTitle,
-            "project_description": body.projectDescription,
-            "demo_url": body.demoUrl or None,
-            "repo_url": body.repoUrl or None,
-            "pdf_url": body.pdfUrl or None,
-            "video_url": body.videoUrl or None,
-            "poster_url": body.posterUrl or None,
-            "status": "pending",
-        }
+    data: dict[str, object] = {
+        "full_name": body.fullName,
+        "email": body.email,
+        "organization": body.organization,
+        "github": body.phone,
+        "track": body.track or None,
+        "project_title": body.projectTitle,
+        "project_description": body.projectDescription,
+        "demo_url": body.demoUrl or None,
+        "repo_url": body.repoUrl or None,
+        "pdf_url": body.pdfUrl or None,
+        "video_url": body.videoUrl or None,
+        "poster_url": body.posterUrl or None,
+        "status": "pending",
+    }
 
-        result = supabase.table("participants").insert(data).execute()
+    try:
+        result = await _insert_with_resilience(
+            table_name="participants",
+            data=data,
+            endpoint="register",
+        )
 
         background_tasks.add_task(
             audit_and_notify,
@@ -103,8 +428,22 @@ async def register_participant(
             "url_warnings": warnings if warnings else None,
         }
 
-    except HTTPException:
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            queue_size = await _enqueue_fallback_job(
+                table_name="participants",
+                data=data,
+                endpoint="register",
+            )
+            warnings = [i for i in url_issues if i["level"] == "warning"]
+            return {
+                "message": "Registration accepted and queued",
+                "queued": True,
+                "queue_size": queue_size,
+                "url_warnings": warnings if warnings else None,
+            }
         raise
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -151,7 +490,7 @@ async def update_participant_status(participant_id: int, body: UpdateStatusReque
         if body.status not in valid_statuses:
             raise HTTPException(status_code=400, detail="Invalid status")
 
-        update_data = {
+        update_data: dict[str, object] = {
             "status": body.status,
             "updated_at": datetime.utcnow().isoformat(),
         }

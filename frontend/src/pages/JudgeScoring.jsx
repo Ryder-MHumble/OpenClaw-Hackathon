@@ -22,6 +22,7 @@ import {
   Send,
   AlertTriangle,
   ArrowRight,
+  Keyboard,
   Trash2,
 } from "lucide-react";
 import apiClient from "../config/apiClient";
@@ -463,6 +464,15 @@ export default function JudgeScoring() {
                 </div>
               )}
             </div>
+
+            <button
+              onClick={() => navigate("/judge/roadshow-scoring")}
+              className="p-2 sm:px-4 sm:py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary border border-primary/30 transition-all flex items-center gap-2 text-sm font-bold"
+              title="路演计分"
+            >
+              <Keyboard className="size-4" />
+              <span className="hidden sm:inline">路演计分</span>
+            </button>
 
             <button
               onClick={handleDelete}

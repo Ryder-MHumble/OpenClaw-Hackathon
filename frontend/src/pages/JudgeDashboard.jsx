@@ -15,11 +15,11 @@ import {
   Link2,
   Building2,
   CalendarClock,
-  Trophy,
   Inbox,
   Loader2,
   ClipboardList,
   BarChart3,
+  Keyboard,
   Trash2,
   LogOut,
 } from "lucide-react";
@@ -311,7 +311,7 @@ export default function JudgeDashboard() {
       borderClass: "border-l-2 border-l-amber-400/50",
     },
     {
-      label: "初筛通过 (目标30个)",
+      label: "初筛通过",
       value: stats.reviewing,
       accentClass: "text-emerald-400/80",
       barClass: "bg-emerald-400",
@@ -354,6 +354,13 @@ export default function JudgeDashboard() {
                 className="text-primary text-sm font-bold border-b border-primary pb-0.5"
               >
                 控制面板
+              </button>
+              <button
+                onClick={() => navigate("/judge/roadshow-scoring")}
+                className="text-slate-500 hover:text-slate-200 transition-colors text-sm font-medium flex items-center gap-1.5"
+              >
+                <Keyboard size={14} />
+                路演计分
               </button>
               <button
                 onClick={() => navigate("/judge/leaderboard")}
@@ -407,56 +414,6 @@ export default function JudgeDashboard() {
               </>
             )}
           </button>
-        </div>
-
-        {/* 初筛目标提示 */}
-        <div className="mb-6 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-          <div className="flex items-start gap-3">
-            <Trophy className="size-5 text-amber-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-bold text-amber-300 mb-1">初筛目标</p>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                每个赛道需初筛通过{" "}
-                <span className="text-amber-400 font-bold">10个项目</span>，共计{" "}
-                <span className="text-amber-400 font-bold">30个项目</span>{" "}
-                进入决赛。 当前已通过：学术{" "}
-                <span className="font-mono text-amber-400">
-                  {trackStats.academic > 0
-                    ? Math.min(
-                        10,
-                        Math.floor(
-                          (stats.reviewing * trackStats.academic) / stats.total,
-                        ),
-                      )
-                    : 0}
-                </span>
-                /10 · 生产力{" "}
-                <span className="font-mono text-amber-400">
-                  {trackStats.productivity > 0
-                    ? Math.min(
-                        10,
-                        Math.floor(
-                          (stats.reviewing * trackStats.productivity) /
-                            stats.total,
-                        ),
-                      )
-                    : 0}
-                </span>
-                /10 · 生活{" "}
-                <span className="font-mono text-amber-400">
-                  {trackStats.life > 0
-                    ? Math.min(
-                        10,
-                        Math.floor(
-                          (stats.reviewing * trackStats.life) / stats.total,
-                        ),
-                      )
-                    : 0}
-                </span>
-                /10
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Stats Cards */}

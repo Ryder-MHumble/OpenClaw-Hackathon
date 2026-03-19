@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Keyboard } from "lucide-react";
 import apiClient from "../config/apiClient";
 import { API_BASE_URL } from "../config/api";
 
@@ -150,6 +151,13 @@ export default function Leaderboard() {
               className="text-slate-600 dark:text-slate-300 hover:text-primary transition-colors text-sm font-medium"
             >
               控制面板
+            </button>
+            <button
+              onClick={() => navigate("/judge/roadshow-scoring")}
+              className="text-slate-600 dark:text-slate-300 hover:text-primary transition-colors text-sm font-medium flex items-center gap-1"
+            >
+              <Keyboard size={14} />
+              路演计分
             </button>
             <button className="text-primary text-sm font-bold border-b-2 border-primary pb-1">
               排行榜

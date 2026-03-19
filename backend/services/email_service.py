@@ -3,26 +3,78 @@ import smtplib
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Optional
+from typing import Optional, TypedDict
+
+import httpx
 
 from config import SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM
-from services.url_validator import validate_url, check_accessibility, _FIELD_LABELS
+from services.url_validator import (
+    validate_url,
+    check_accessibility,
+    get_shared_access_client,
+    _FIELD_LABELS,
+)
+
+_AUDIT_SEMAPHORE = asyncio.Semaphore(16)
 
 
-async def audit_and_notify(name: str, email: str, project_title: str,
-                            url_fields: dict[str, str]):
+class FieldIssue(TypedDict):
+    url: str
+    problems: list[str]
+
+
+async def _bounded_access_check(
+    url: str,
+    field: str,
+    client: httpx.AsyncClient,
+) -> tuple[str, Optional[str]]:
+    async with _AUDIT_SEMAPHORE:
+        result = await check_accessibility(url, client=client)
+    return field, result
+
+
+def _send_email(to_email: str, subject: str, body: str):
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = SMTP_FROM or SMTP_USER
+    msg["To"] = to_email
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+
+    with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.sendmail(SMTP_FROM or SMTP_USER, [to_email], msg.as_string())
+
+
+async def audit_and_notify(
+    name: str,
+    email: str,
+    project_title: str,
+    url_fields: dict[str, Optional[str]],
+):
     """后台任务：并发检测所有 URL，有问题则发邮件提醒"""
     check_tasks = {field: url for field, url in url_fields.items() if url}
+    shared_client = get_shared_access_client()
     results = await asyncio.gather(
-        *[check_accessibility(url) for url in check_tasks.values()],
+        *[
+            _bounded_access_check(url, field, shared_client)
+            for field, url in check_tasks.items()
+        ],
         return_exceptions=True,
     )
 
-    field_issues: dict[str, list[str]] = {}
-    for (field, url), err in zip(check_tasks.items(), results):
+    field_issues: dict[str, FieldIssue] = {}
+    for result in results:
+        if not isinstance(result, tuple):
+            continue
+        field, err = result
+        url = check_tasks.get(field)
+        if not url:
+            continue
+
         problems = []
         pattern_issue = validate_url(url, field)
-        if pattern_issue:
+        # warning 仅用于提示，不触发「链接有问题」邮件
+        if pattern_issue and pattern_issue.get("level") == "error":
             problems.append(pattern_issue["message"])
         if isinstance(err, str):
             problems.append(err)
@@ -84,13 +136,6 @@ async def audit_and_notify(name: str, email: str, project_title: str,
     body = "\n".join(lines)
 
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = SMTP_FROM or SMTP_USER
-        msg["To"] = email
-        msg.attach(MIMEText(body, "plain", "utf-8"))
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_FROM or SMTP_USER, [email], msg.as_string())
+        await asyncio.to_thread(_send_email, email, subject, body)
     except Exception as e:
         print(f"[URL audit] 邮件发送失败 ({email}): {e}")

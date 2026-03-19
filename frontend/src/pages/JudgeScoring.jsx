@@ -185,11 +185,20 @@ export default function JudgeScoring() {
 
   const fetchParticipant = async () => {
     try {
-      const [participantRes, nextRes] = await Promise.all([
-        apiClient.get(`/api/judges/participants/${teamId}`),
-        apiClient.get(`/api/judges/participants/${teamId}/next`),
-      ]);
+      const participantRes = await apiClient.get(`/api/judges/participants/${teamId}`);
       const p = participantRes.data.data;
+
+      const nextStatusFilter =
+        p.status === "pending"
+          ? "pending"
+          : p.status === "reviewing"
+            ? "reviewing"
+            : null;
+
+      const nextRes = await apiClient.get(`/api/judges/participants/${teamId}/next`, {
+        params: nextStatusFilter ? { status: nextStatusFilter } : undefined,
+      });
+
       setParticipant(p);
       setNextId(nextRes.data.data.next_id);
 
@@ -315,10 +324,21 @@ export default function JudgeScoring() {
   const handleGoNextProject = async () => {
     try {
       let targetId = nextId;
+      const nextStatusFilter =
+        participant?.status === "pending"
+          ? "pending"
+          : participant?.status === "reviewing"
+            ? "reviewing"
+            : null;
 
       // Fallback: re-fetch next id at click time
       if (!targetId || Number(targetId) === Number(teamId)) {
-        const nextRes = await apiClient.get(`/api/judges/participants/${teamId}/next`);
+        const nextRes = await apiClient.get(
+          `/api/judges/participants/${teamId}/next`,
+          {
+            params: nextStatusFilter ? { status: nextStatusFilter } : undefined,
+          },
+        );
         targetId = nextRes?.data?.data?.next_id ?? null;
       }
 

@@ -12,8 +12,8 @@ import {
   Loader2,
   ShieldCheck,
 } from "lucide-react";
-import apiClient from "../config/apiClient";
 import LobsterLogo from "../components/LobsterLogo";
+import { loginJudgeWithPassword } from "../data/judgeStaticStore";
 
 export default function JudgeLogin() {
   const [password, setPassword] = useState("");
@@ -35,15 +35,14 @@ export default function JudgeLogin() {
     setError("");
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("password", password);
-      const response = await apiClient.post("/api/judges/login", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      localStorage.setItem("judgeToken", response.data.token);
+      const result = loginJudgeWithPassword(password);
+      if (!result.ok) {
+        setError(result.error || "登录失败，请重试");
+        return;
+      }
       navigate("/judge/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "登录失败，请重试");
+      setError(err?.message || "登录失败，请重试");
     } finally {
       setLoading(false);
     }

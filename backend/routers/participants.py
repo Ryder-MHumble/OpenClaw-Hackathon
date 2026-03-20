@@ -8,21 +8,21 @@ from typing import Any, Optional
 from io import BytesIO
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Header
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import openpyxl
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from openpyxl.styles import Font, Alignment, PatternFill
-from jose import JWTError, jwt
+from openpyxl.utils import get_column_letter
 
+from auth import get_current_judge
 from database import supabase
 from models import RegisterRequest, UpdateStatusRequest
 from services.url_validator import validate_url
 from services.email_service import audit_and_notify
 from config import (
-    SECRET_KEY,
-    ALGORITHM,
     REGISTER_DB_TIMEOUT_SECONDS,
     REGISTER_DB_MAX_RETRIES,
     REGISTER_DB_RETRY_BASE_DELAY,
@@ -587,24 +587,42 @@ async def delete_participant(participant_id: int):
 
 
 @router.get("/api/judges/participants/export/excel")
-async def export_participants_excel(authorization: Optional[str] = Header(None)):
+async def export_participants_excel(_: dict = Depends(get_current_judge)):
     """导出参赛者评审情况为Excel"""
-    # 验证 token
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="未授权")
 
-    token = authorization.replace("Bearer ", "")
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("role") != "judge":
-            raise HTTPException(status_code=403, detail="权限不足")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="无效的令牌")
+    def clean_excel_value(value: Any) -> Any:
+        if value is None:
+            return ""
+        if not isinstance(value, str):
+            return value
+        cleaned = ILLEGAL_CHARACTERS_RE.sub("", value)
+        # Excel 单个单元格字符串上限为 32767
+        return cleaned[:32767]
 
     try:
         # 获取所有参赛者数据
         result = supabase.table("participants").select("*").order("id").execute()
-        participants = result.data
+        participants = result.data or []
+
+        # 批量获取评分备注，避免 N+1 查询导致导出过慢
+        latest_comments: dict[int, str] = {}
+        try:
+            score_result = (
+                supabase.table("scores")
+                .select("participant_id, comments, created_at")
+                .order("created_at", desc=True)
+                .execute()
+            )
+            for score in score_result.data or []:
+                participant_id = score.get("participant_id")
+                if participant_id in latest_comments:
+                    continue
+                text = (score.get("comments") or "").strip()
+                if text:
+                    latest_comments[participant_id] = text
+        except Exception:
+            # 备注读取失败不影响主导出
+            latest_comments = {}
 
         # 创建Excel工作簿
         wb = openpyxl.Workbook()
@@ -647,13 +665,6 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
             "life": "生活龙虾",
         }
 
-        status_map = {
-            "pending": "待评审",
-            "reviewing": "评审中",
-            "scored": "已评分",
-            "rejected": "已拒绝",
-        }
-
         for row_num, p in enumerate(participants, 2):
             # 材料是否齐全
             materials_status = ""
@@ -673,24 +684,7 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
             else:
                 pass_status = "待定"
 
-            # 备注信息（从scores表获取最近一条非空备注）
-            comments = ""
-            try:
-                score_result = (
-                    supabase.table("scores")
-                    .select("comments, created_at")
-                    .eq("participant_id", p["id"])
-                    .order("created_at", desc=True)
-                    .execute()
-                )
-                if score_result.data:
-                    for score in score_result.data:
-                        text = (score.get("comments") or "").strip()
-                        if text:
-                            comments = text
-                            break
-            except Exception:
-                pass
+            comments = latest_comments.get(p.get("id"), "")
 
             row_data = [
                 p.get("id"),
@@ -709,15 +703,17 @@ async def export_participants_excel(authorization: Optional[str] = Header(None))
             ]
 
             for col_num, value in enumerate(row_data, 1):
-                cell = ws.cell(row=row_num, column=col_num, value=value)
+                cell = ws.cell(
+                    row=row_num,
+                    column=col_num,
+                    value=clean_excel_value(value),
+                )
                 cell.alignment = Alignment(vertical="center", wrap_text=True)
 
         # 调整列宽
         column_widths = [8, 15, 30, 40, 35, 35, 35, 35, 35, 15, 12, 40, 20]
         for col_num, width in enumerate(column_widths, 1):
-            ws.column_dimensions[
-                openpyxl.utils.get_column_letter(col_num)
-            ].width = width
+            ws.column_dimensions[get_column_letter(col_num)].width = width
 
         # 保存到内存
         output = BytesIO()

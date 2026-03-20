@@ -25,9 +25,16 @@ import {
   Keyboard,
   Trash2,
 } from "lucide-react";
-import apiClient from "../config/apiClient";
 import { getTrackInfo } from "../constants/tracks";
-import { API_BASE_URL } from "../config/api";
+import {
+  deleteParticipantById,
+  getLeaderboard,
+  getNextParticipantId,
+  getParticipantById,
+  getScoreByParticipantId,
+  submitFinalScore,
+  updateParticipantStatus,
+} from "../data/judgeStaticStore";
 
 // Spinner component
 function Spinner({ size = 20, className = "" }) {
@@ -186,8 +193,11 @@ export default function JudgeScoring() {
 
   const fetchParticipant = async () => {
     try {
-      const participantRes = await apiClient.get(`/api/judges/participants/${teamId}`);
-      const p = participantRes.data.data;
+      const p = getParticipantById(teamId);
+      if (!p) {
+        navigate("/judge/dashboard");
+        return;
+      }
 
       const nextStatusFilter =
         p.status === "pending"
@@ -196,17 +206,23 @@ export default function JudgeScoring() {
             ? "reviewing"
             : null;
 
-      const nextRes = await apiClient.get(`/api/judges/participants/${teamId}/next`, {
-        params: nextStatusFilter ? { status: nextStatusFilter } : undefined,
-      });
-
       setParticipant(p);
-      setNextId(nextRes.data.data.next_id);
+      setNextId(getNextParticipantId(teamId, nextStatusFilter));
 
       if (p.status === "scored") {
         try {
-          const lbRes = await apiClient.get("/api/judges/leaderboard");
-          const entry = lbRes.data.data.find((item) => item.id === p.id);
+          const score = getScoreByParticipantId(teamId);
+          const entry = getLeaderboard().find((item) => String(item.id) === String(p.id));
+          if (score) {
+            setExistingScore({
+              innovation: Number(score.innovation.toFixed(1)),
+              technical: Number(score.technical.toFixed(1)),
+              market: Number(score.market.toFixed(1)),
+              demo: Number(score.demo.toFixed(1)),
+              weighted: Number(score.weighted_score.toFixed(1)),
+            });
+            return;
+          }
           if (entry) {
             setExistingScore({
               innovation: entry.avg_innovation,
@@ -241,7 +257,7 @@ export default function JudgeScoring() {
 
     setSubmitting(true);
     try {
-      await apiClient.delete(`/api/judges/participants/${teamId}`);
+      deleteParticipantById(teamId);
 
       setModal({
         show: true,
@@ -265,10 +281,10 @@ export default function JudgeScoring() {
     setSubmitting(true);
     try {
       const newStatus = decision === "approved" ? "reviewing" : "rejected";
-      await apiClient.patch(`/api/judges/participants/${teamId}/status`, {
+      updateParticipantStatus(teamId, {
         status: newStatus,
         comments: comments || undefined,
-        materials_complete: materialsComplete,
+        materialsComplete,
       });
 
       setModal({
@@ -297,11 +313,13 @@ export default function JudgeScoring() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const fd = new FormData();
-      fd.append("participant_id", teamId);
-      Object.entries(scores).forEach(([k, v]) => fd.append(k, v));
-      fd.append("comments", comments);
-      await apiClient.post("/api/judges/score", fd);
+      submitFinalScore(teamId, {
+        innovation: scores.innovation,
+        technical: scores.technical,
+        market: scores.market,
+        demo: scores.demo,
+        comments,
+      });
 
       setModal({
         show: true,
@@ -333,19 +351,13 @@ export default function JudgeScoring() {
             : null;
 
       // Fallback: re-fetch next id at click time
-      if (!targetId || Number(targetId) === Number(teamId)) {
-        const nextRes = await apiClient.get(
-          `/api/judges/participants/${teamId}/next`,
-          {
-            params: nextStatusFilter ? { status: nextStatusFilter } : undefined,
-          },
-        );
-        targetId = nextRes?.data?.data?.next_id ?? null;
+      if (!targetId || String(targetId) === String(teamId)) {
+        targetId = getNextParticipantId(teamId, nextStatusFilter);
       }
 
       setModal((prev) => ({ ...prev, show: false }));
 
-      if (targetId && Number(targetId) !== Number(teamId)) {
+      if (targetId && String(targetId) !== String(teamId)) {
         window.location.assign(`/judge/scoring/${targetId}`);
         return;
       }
@@ -674,7 +686,7 @@ export default function JudgeScoring() {
                       {loadingStates.poster && <LoadingOverlay />}
                       {!failedLoads.poster && (
                         <img
-                          src={`${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(participant.poster_url)}`}
+                          src={participant.poster_url}
                           alt="项目海报"
                           className="max-w-full max-h-full object-contain"
                           onLoad={() =>

@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import CursorClaw from "./components/CursorClaw";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleSelection from "./pages/RoleSelection";
-import ParticipantRegistration from "./pages/ParticipantRegistration";
 import JudgeLogin from "./pages/JudgeLogin";
 import JudgeDashboard from "./pages/JudgeDashboard";
 import JudgeScoring from "./pages/JudgeScoring";
@@ -20,10 +19,6 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<RoleSelection />} />
-          <Route
-            path="/participant/register"
-            element={<ParticipantRegistration />}
-          />
           <Route path="/judge/login" element={<JudgeLogin />} />
           <Route
             path="/judge/dashboard"

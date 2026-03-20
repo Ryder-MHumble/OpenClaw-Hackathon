@@ -7,6 +7,20 @@ import httpx
 router = APIRouter()
 
 UPLOAD_DIR = "uploads"
+_PROXY_TIMEOUT = httpx.Timeout(15.0, connect=5.0)
+_PROXY_LIMITS = httpx.Limits(max_connections=100, max_keepalive_connections=20)
+_proxy_client: httpx.AsyncClient | None = None
+
+
+def get_proxy_client() -> httpx.AsyncClient:
+    global _proxy_client
+    if _proxy_client is None:
+        _proxy_client = httpx.AsyncClient(
+            timeout=_PROXY_TIMEOUT,
+            follow_redirects=True,
+            limits=_PROXY_LIMITS,
+        )
+    return _proxy_client
 
 
 @router.get("/api/proxy-image")
@@ -16,26 +30,28 @@ async def proxy_image(url: str):
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Referer": "https://www.bilibili.com/",
-            "Accept": "image/*,*/*;q=0.8"
+            "Accept": "image/*,*/*;q=0.8",
         }
 
-        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-            response = await client.get(url, headers=headers)
-            response.raise_for_status()
+        client = get_proxy_client()
+        response = await client.get(url, headers=headers)
+        response.raise_for_status()
 
-            content_type = response.headers.get("content-type", "image/jpeg")
+        content_type = response.headers.get("content-type", "image/jpeg")
 
-            return StreamingResponse(
-                iter([response.content]),
-                media_type=content_type,
-                headers={
-                    "Cache-Control": "public, max-age=3600",
-                    "Access-Control-Allow-Origin": "*",
-                    "Content-Disposition": "inline"
-                }
-            )
+        return StreamingResponse(
+            iter([response.content]),
+            media_type=content_type,
+            headers={
+                "Cache-Control": "public, max-age=3600",
+                "Access-Control-Allow-Origin": "*",
+                "Content-Disposition": "inline",
+            },
+        )
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=502, detail=f"无法加载图片: HTTP {e.response.status_code}")
+        raise HTTPException(
+            status_code=502, detail=f"无法加载图片: HTTP {e.response.status_code}"
+        )
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="图片加载超时")
     except Exception as e:

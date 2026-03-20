@@ -33,6 +33,16 @@ app.include_router(voting_core.router)
 app.include_router(voting_admin.router)
 
 
+@app.on_event("startup")
+async def startup_event():
+    await participants.initialize_participant_services()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await participants.shutdown_participant_services()
+
+
 @app.get("/")
 async def root():
     return {"message": "OpenClaw Hackathon API", "status": "running"}
@@ -66,4 +76,5 @@ async def scalar_docs():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

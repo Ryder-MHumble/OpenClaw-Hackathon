@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BarChart3,
@@ -8,9 +8,12 @@ import {
   FlaskConical,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  Download,
 } from "lucide-react";
 import LobsterLogo from "../components/LobsterLogo";
-import apiClient from "../config/apiClient";
+import { getRoadshowProjectsGrouped } from "../data/judgeStaticStore";
 
 const STORAGE_KEY = "openclaw_roadshow_scoring_v2";
 
@@ -47,6 +50,20 @@ function makeDefaultParticipants() {
       name: "",
     })),
   );
+}
+
+function makeParticipantsFromGrouped(grouped) {
+  return TRACKS.flatMap((track) => {
+    const options = grouped[track.id] || [];
+    const count = options.length || 10;
+    return Array.from({ length: count }, (_, i) => ({
+      id: `${track.id}-${i + 1}`,
+      trackId: track.id,
+      order: i + 1,
+      name: options[i]?.name || "",
+      sourceParticipantId: undefined,
+    }));
+  });
 }
 
 function initialState() {
@@ -170,6 +187,53 @@ function parseInput(raw) {
   return { ok: true, value: n };
 }
 
+function xmlEscape(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function buildExcelXml(sheetName, headers, rows) {
+  const headerXml = headers
+    .map(
+      (header) =>
+        `<Cell><Data ss:Type="String">${xmlEscape(header)}</Data></Cell>`,
+    )
+    .join("");
+
+  const rowXml = rows
+    .map((row) => {
+      const cells = row
+        .map((value) => {
+          if (typeof value === "number" && Number.isFinite(value)) {
+            return `<Cell><Data ss:Type="Number">${value}</Data></Cell>`;
+          }
+          return `<Cell><Data ss:Type="String">${xmlEscape(value ?? "")}</Data></Cell>`;
+        })
+        .join("");
+      return `<Row>${cells}</Row>`;
+    })
+    .join("");
+
+  return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Worksheet ss:Name="${xmlEscape(sheetName)}">
+  <Table>
+   <Row>${headerXml}</Row>
+   ${rowXml}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+}
+
 function buildDemoDataset() {
   const judges = makeDefaultJudges(15);
   const participants = makeDefaultParticipants();
@@ -213,59 +277,58 @@ export default function JudgeRoadshowScoring() {
   const [errors, setErrors] = useState({});
   const [judgeBulkText, setJudgeBulkText] = useState("");
   const [collapsed, setCollapsed] = useState({
-    projectImport: false,
     judgeImport: false,
   });
-  const [optionsLoading, setOptionsLoading] = useState(false);
   const [optionsMsg, setOptionsMsg] = useState("");
-  const [projectOptionsByTrack, setProjectOptionsByTrack] = useState({
-    academic: [],
-    productivity: [],
-    life: [],
-  });
-  const [bulkSelection, setBulkSelection] = useState({
-    academic: [],
-    productivity: [],
-    life: [],
-  });
+  const autoAdvanceTimerRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
+  useEffect(
+    () => () => {
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
-    const fetchProjectOptions = async () => {
-      setOptionsLoading(true);
+    const loadRoadshowProjects = async () => {
       setOptionsMsg("");
       try {
-        const res = await apiClient.get("/api/judges/participants");
-        const rows = Array.isArray(res?.data?.data) ? res.data.data : [];
-        const grouped = {
-          academic: [],
-          productivity: [],
-          life: [],
-        };
+        const grouped = getRoadshowProjectsGrouped();
+        setState((prev) => {
+          const participants = makeParticipantsFromGrouped(grouped);
+          const validIds = new Set(participants.map((p) => p.id));
+          const nextScores = Object.fromEntries(
+            Object.entries(prev.scores).filter(([participantId]) =>
+              validIds.has(participantId),
+            ),
+          );
 
-        rows.forEach((item) => {
-          if (!item?.track || !item?.project_title || !grouped[item.track]) return;
-          grouped[item.track].push({
-            id: String(item.id),
-            name: item.project_title,
-            status: item.status || "unknown",
-          });
+          const activeTrackExists = TRACKS.some(
+            (track) => track.id === prev.activeTrackId,
+          );
+          return {
+            ...prev,
+            participants,
+            scores: nextScores,
+            activeTrackId: activeTrackExists ? prev.activeTrackId : "academic",
+          };
         });
-
-        setProjectOptionsByTrack(grouped);
-        setOptionsMsg("候选项目列表已加载，可通过下拉框导入。 ");
+        const counts = TRACKS.map(
+          (track) => `${track.name}${grouped[track.id]?.length || 0} 个`,
+        ).join("，");
       } catch (error) {
-        console.error("Fetch project options failed:", error);
-        setOptionsMsg("候选项目加载失败，请检查网络或登录态");
-      } finally {
-        setOptionsLoading(false);
+        console.error("Load roadshow projects failed:", error);
+        setOptionsMsg("项目名称加载失败，请检查前端静态数据");
       }
     };
 
-    fetchProjectOptions();
+    loadRoadshowProjects();
   }, []);
 
   const handleLogout = () => {
@@ -297,63 +360,14 @@ export default function JudgeRoadshowScoring() {
     setOptionsMsg(`已更新评委名称 ${Math.min(names.length, state.judges.length)} 位`);
   };
 
-  const applyBulkImportForTrack = (trackId) => {
-    const selectedIds = bulkSelection[trackId] || [];
-    if (!selectedIds.length) {
-      setOptionsMsg("请先在多选框中选择要导入的项目");
-      return;
-    }
-
-    const optionMap = new Map(
-      (projectOptionsByTrack[trackId] || []).map((item) => [item.id, item]),
-    );
-    const orderedOptions = selectedIds
-      .map((id) => optionMap.get(id))
-      .filter(Boolean)
-      .slice(0, 10);
-
-    setState((prev) => {
-      const participants = prev.participants.map((participant) => {
-        if (participant.trackId !== trackId) return participant;
-        const item = orderedOptions[participant.order - 1];
-        return {
-          ...participant,
-          name: item?.name || "",
-          sourceParticipantId: item?.id || undefined,
-        };
-      });
-
-      const scores = { ...prev.scores };
-      participants
-        .filter((participant) => participant.trackId === trackId)
-        .forEach((participant) => {
-          scores[participant.id] = {};
-        });
-
-      return {
-        ...prev,
-        participants,
-        scores,
-      };
-    });
-
-    setOptionsMsg(
-      `已导入 ${orderedOptions.length} 个项目到${TRACKS.find((t) => t.id === trackId)?.name}，该赛道评分已清空，请重新录入。`,
-    );
-  };
-
-  const clearAllProjects = () => {
-    if (!window.confirm("确定清空当前页面的全部项目名称和评分数据吗？")) return;
+  const clearAllScores = () => {
+    if (!window.confirm("确定清空当前页面的全部评分数据吗？此操作不可恢复。")) return;
     setState((prev) => ({
       ...prev,
-      participants: prev.participants.map((participant) => ({
-        ...participant,
-        name: "",
-        sourceParticipantId: undefined,
-      })),
       scores: {},
     }));
-    setOptionsMsg("已清空全部项目名称与评分数据，请通过下拉框重新导入。 ");
+    setErrors({});
+    setOptionsMsg("已清空全部评分数据，项目名称保持不变。");
   };
 
   const trackParticipants = useMemo(
@@ -363,9 +377,49 @@ export default function JudgeRoadshowScoring() {
         .sort((a, b) => a.order - b.order),
     [state.participants, state.activeTrackId],
   );
-
   const activeJudge =
     state.judges.find((j) => j.id === state.activeJudgeId) || state.judges[0];
+  const activeJudgeIndex = state.judges.findIndex((j) => j.id === activeJudge?.id);
+  const activeJudgeOrder = activeJudgeIndex >= 0 ? activeJudgeIndex + 1 : 1;
+
+  const switchJudgeByStep = (step) => {
+    setState((prev) => {
+      if (!prev.judges.length) return prev;
+      const currentIdx = prev.judges.findIndex((j) => j.id === prev.activeJudgeId);
+      const startIdx = currentIdx >= 0 ? currentIdx : 0;
+      const nextIdx = (startIdx + step + prev.judges.length) % prev.judges.length;
+      return {
+        ...prev,
+        activeJudgeId: prev.judges[nextIdx].id,
+      };
+    });
+  };
+
+  const focusNextCell = (participantId, dimensionKey) => {
+    const rowIdx = trackParticipants.findIndex((p) => p.id === participantId);
+    const colIdx = DIMENSIONS.findIndex((d) => d.key === dimensionKey);
+    if (rowIdx < 0 || colIdx < 0) return;
+
+    const isLastCol = colIdx === DIMENSIONS.length - 1;
+    const nextRowIdx = isLastCol ? rowIdx + 1 : rowIdx;
+    const nextColIdx = isLastCol ? 0 : colIdx + 1;
+    const nextParticipant = trackParticipants[nextRowIdx];
+    const nextDimension = DIMENSIONS[nextColIdx];
+    if (!nextParticipant || !nextDimension) return;
+
+    const nextCellId = `${nextParticipant.id}:${nextDimension.key}`;
+    const nextInput = document.querySelector(`input[data-score-cell="${nextCellId}"]`);
+    if (nextInput instanceof HTMLInputElement) {
+      nextInput.focus();
+      nextInput.select();
+    }
+  };
+
+  const shouldAutoAdvance = (raw, value) => {
+    if (typeof value !== "number") return false;
+    const normalized = raw.trim();
+    return /^[1-9]$/.test(normalized) || normalized === "10";
+  };
 
   const setScore = (participantId, judgeId, dimension, value) => {
     setState((prev) => {
@@ -450,6 +504,56 @@ export default function JudgeRoadshowScoring() {
     }).filter(Boolean);
   }, [state.participants, state.judges, state.scores]);
 
+  const exportTrackRankingToExcel = () => {
+    const activeTrack = TRACKS.find((t) => t.id === state.activeTrackId);
+    const trackName = activeTrack?.name || "赛道";
+
+    if (!trackRank.length) {
+      window.alert("当前赛道暂无可导出的排名数据");
+      return;
+    }
+
+    const headers = [
+      "排名",
+      "项目名称",
+      "创新性",
+      "技术难度",
+      "应用前景",
+      "路演表现",
+      "总分",
+      "奖项",
+      "是否需投票",
+    ];
+
+    const rows = trackRank.map((row) => {
+      const participant = trackParticipants.find((p) => p.id === row.participantId);
+      return [
+        row.rank,
+        participant?.name || "未命名项目",
+        row.innovationAvg ?? "",
+        row.techAvg ?? "",
+        row.applicationAvg ?? "",
+        row.roadshowAvg ?? "",
+        row.total ?? "",
+        getAward(row.rank),
+        row.tie ? "是" : "否",
+      ];
+    });
+
+    const xml = buildExcelXml(`${trackName}实时排名`, headers, rows);
+    const blob = new Blob([`\uFEFF${xml}`], {
+      type: "application/vnd.ms-excel;charset=utf-8;",
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${trackName}_实时排名_${new Date().toISOString().slice(0, 10)}.xls`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-[#0c0a09] text-slate-100">
       <header className="sticky top-0 z-50 border-b border-white/[0.06] backdrop-blur-xl bg-black/30 px-6 lg:px-16 py-3.5">
@@ -519,7 +623,6 @@ export default function JudgeRoadshowScoring() {
                   className="px-3 py-2 rounded-lg border border-white/10 bg-white/[0.02] text-sm flex items-center justify-between"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs text-slate-500">#{participant.order}</p>
                     <p className="text-sm truncate">
                       {participant.name || "待导入项目"}
                     </p>
@@ -543,6 +646,39 @@ export default function JudgeRoadshowScoring() {
                 {track.emoji} {track.name}
               </button>
             ))}
+            <span className="text-xs text-slate-300 ml-2">快速切换评委</span>
+            <button
+              onClick={() => switchJudgeByStep(-1)}
+              className="px-2 py-1.5 rounded-lg text-xs border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"
+              title="上一个评委"
+              aria-label="上一个评委"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <select
+              value={state.activeJudgeId}
+              onChange={(e) =>
+                setState((prev) => ({ ...prev, activeJudgeId: e.target.value }))
+              }
+              className="h-8 min-w-36 rounded-lg border border-white/10 bg-white/[0.03] px-2 text-xs text-slate-100 outline-none focus:border-primary/60"
+            >
+              {state.judges.map((judge, idx) => (
+                <option key={judge.id} value={judge.id} className="bg-[#1b120f]">
+                  {idx + 1}. {judge.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => switchJudgeByStep(1)}
+              className="px-2 py-1.5 rounded-lg text-xs border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"
+              title="下一个评委"
+              aria-label="下一个评委"
+            >
+              <ChevronRight size={14} />
+            </button>
+            <span className="text-xs text-slate-400">
+              当前：{activeJudge?.name || "-"}（{activeJudgeOrder}/{state.judges.length}）
+            </span>
             <a href="#rank-track" className="text-xs text-slate-400 hover:text-slate-200 ml-auto">
               跳转到排行区
             </a>
@@ -553,10 +689,10 @@ export default function JudgeRoadshowScoring() {
               <h3 className="font-bold text-lg">录入准备</h3>
               <div className="flex gap-2">
                 <button
-                  onClick={clearAllProjects}
+                  onClick={clearAllScores}
                   className="px-3 py-2 rounded-lg border border-red-300/30 text-red-200 bg-red-500/10 text-sm font-medium"
                 >
-                  清空项目数据
+                  清空评分数据
                 </button>
                 <button
                   onClick={() => {
@@ -569,85 +705,6 @@ export default function JudgeRoadshowScoring() {
                   <FlaskConical size={14} /> 写入测试数据
                 </button>
               </div>
-            </div>
-
-            <div className="rounded-lg border border-blue-300/20 bg-blue-500/10 p-3 mb-3">
-              <button
-                onClick={() =>
-                  setCollapsed((prev) => ({
-                    ...prev,
-                    projectImport: !prev.projectImport,
-                  }))
-                }
-                className="w-full flex items-center justify-between text-left"
-              >
-                <span className="text-sm font-semibold text-blue-200">项目导入模块（多选下拉）</span>
-                {collapsed.projectImport ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-              </button>
-
-              {!collapsed.projectImport && (
-                <>
-                  <p className="text-xs text-blue-200 mt-2">
-                    在下方按赛道使用多选下拉框批量选择决赛项目（最多10个），并一键导入到对应赛道。
-                  </p>
-                  <p className="text-[11px] text-slate-300 mt-1 mb-3">
-                    候选加载状态：{optionsLoading ? "加载中..." : "已就绪"}
-                  </p>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-1">
-                    {TRACKS.map((track) => {
-                      const options = projectOptionsByTrack[track.id] || [];
-                      const selected = bulkSelection[track.id] || [];
-                      return (
-                        <div
-                          key={track.id}
-                          className="rounded-lg border border-white/10 bg-white/[0.02] p-3"
-                        >
-                          <p className="text-sm font-semibold mb-2">
-                            {track.emoji} {track.name}
-                          </p>
-                          <select
-                            multiple
-                            size={8}
-                            value={selected}
-                            onChange={(e) => {
-                              const values = Array.from(e.target.selectedOptions).map(
-                                (opt) => opt.value,
-                              );
-                              if (values.length > 10) {
-                                setOptionsMsg("每个赛道最多导入 10 个项目");
-                                return;
-                              }
-                              setBulkSelection((prev) => ({
-                                ...prev,
-                                [track.id]: values,
-                              }));
-                            }}
-                            className="w-full bg-transparent border border-white/10 rounded px-2 py-1 text-xs mb-2"
-                          >
-                            {options.map((option) => (
-                              <option key={option.id} value={option.id}>
-                                {option.name} [{option.status}]
-                              </option>
-                            ))}
-                          </select>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] text-slate-400">
-                              已选 {selected.length}/10
-                            </span>
-                            <button
-                              onClick={() => applyBulkImportForTrack(track.id)}
-                              className="px-2 py-1 rounded border border-primary/40 text-primary bg-primary/10 text-xs font-medium"
-                            >
-                              导入该赛道
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
             </div>
 
             <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
@@ -741,18 +798,15 @@ export default function JudgeRoadshowScoring() {
 
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 overflow-auto">
             <h3 className="font-bold text-lg mb-1">
-              极速录入（按评委整卡录入）：{TRACKS.find((t) => t.id === state.activeTrackId)?.name}
+              {`${TRACKS.find((t) => t.id === state.activeTrackId)?.name || "-"} - ${activeJudge?.name || "-"}`}
             </h3>
-            <p className="text-xs text-slate-400 mb-3">
-              当前评委：{activeJudge?.name || "-"}，支持 Tab 快速切换，输入范围 1-10（可一位小数）
-            </p>
 
             <table className="w-full min-w-[780px] text-sm">
               <thead>
                 <tr className="text-left border-b border-white/10">
-                  <th className="py-2 pr-2">团队</th>
+                  <th className="py-2 pr-2 w-[36%]">团队</th>
                   {DIMENSIONS.map((dim) => (
-                    <th key={dim.key} className="py-2 pr-2">
+                    <th key={dim.key} className="py-2 pr-2 w-[16%]">
                       {dim.label}
                       <span className="text-xs text-slate-500 ml-1">x{dim.weight * 100}%</span>
                     </th>
@@ -762,8 +816,10 @@ export default function JudgeRoadshowScoring() {
               <tbody>
                 {trackParticipants.map((participant) => (
                   <tr key={participant.id} className="border-b border-white/5">
-                    <td className="py-2 pr-2 text-slate-300">
-                      #{participant.order} {participant.name}
+                    <td className="py-2 pr-2 text-slate-300 max-w-0">
+                      <span className="block truncate" title={participant.name}>
+                        {participant.name}
+                      </span>
                     </td>
                     {DIMENSIONS.map((dim) => {
                       const key = `${participant.id}:${dim.key}`;
@@ -773,11 +829,18 @@ export default function JudgeRoadshowScoring() {
                       return (
                         <td key={dim.key} className="py-2 pr-2">
                           <input
+                            data-score-cell={key}
                             value={typeof value === "number" ? String(value) : ""}
                             inputMode="decimal"
                             placeholder="-"
                             className={`w-20 px-2 py-1 rounded border bg-white/[0.03] text-center outline-none ${invalid ? "border-red-400 bg-red-500/10" : "border-white/20 focus:border-primary/60"}`}
                             onChange={(e) => {
+                              if (autoAdvanceTimerRef.current) {
+                                clearTimeout(autoAdvanceTimerRef.current);
+                                autoAdvanceTimerRef.current = null;
+                              }
+
+                              const raw = e.target.value;
                               const parsed = parseInput(e.target.value);
                               if (!parsed.ok) {
                                 setErrors((prev) => ({ ...prev, [key]: true }));
@@ -790,6 +853,12 @@ export default function JudgeRoadshowScoring() {
                                 dim.key,
                                 parsed.value,
                               );
+
+                              if (shouldAutoAdvance(raw, parsed.value)) {
+                                autoAdvanceTimerRef.current = setTimeout(() => {
+                                  focusNextCell(participant.id, dim.key);
+                                }, 220);
+                              }
                             }}
                           />
                         </td>
@@ -803,7 +872,16 @@ export default function JudgeRoadshowScoring() {
 
           <section id="rank-track" className="grid grid-cols-1 xl:grid-cols-3 gap-5">
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 xl:col-span-2">
-              <h3 className="font-bold text-lg mb-3">当前赛道实时排名</h3>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <h3 className="font-bold text-lg">当前赛道实时排名</h3>
+                <button
+                  onClick={exportTrackRankingToExcel}
+                  className="px-3 py-1.5 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-all flex items-center gap-1.5"
+                >
+                  <Download size={13} />
+                  导出Excel
+                </button>
+              </div>
               <div className="space-y-2 max-h-[540px] overflow-auto pr-1">
                 {trackRank.map((row) => {
                   const participant = trackParticipants.find(
@@ -816,10 +894,10 @@ export default function JudgeRoadshowScoring() {
                     >
                       <div>
                         <p className="font-semibold">
-                          #{row.rank} {participant?.name || row.participantId}
+                          {participant?.name || row.participantId}
                         </p>
                         <p className="text-xs text-slate-400">
-                          创新 {row.innovationAvg ?? "-"} · 技术 {row.techAvg ?? "-"} · 应用 {row.applicationAvg ?? "-"}
+                          创新 {row.innovationAvg ?? "-"} · 技术 {row.techAvg ?? "-"} · 应用 {row.applicationAvg ?? "-"} 路演 {row.roadshowAvg ?? "-"}
                         </p>
                       </div>
                       <div className="text-right">
@@ -859,7 +937,9 @@ export default function JudgeRoadshowScoring() {
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 xl:col-span-3">
-              <h4 className="font-semibold mb-2">全局总榜（30个项目）</h4>
+              <h4 className="font-semibold mb-2">
+                全局总榜（{state.participants.length}个项目）
+              </h4>
               <div className="max-h-72 overflow-auto border border-white/10 rounded-lg">
                 <table className="w-full text-sm">
                   <thead className="bg-white/[0.03] sticky top-0">

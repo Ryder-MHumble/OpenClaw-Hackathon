@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Keyboard } from "lucide-react";
-import apiClient from "../config/apiClient";
-import { API_BASE_URL } from "../config/api";
+import {
+  exportLeaderboardCsvText,
+  getLeaderboard,
+} from "../data/judgeStaticStore";
 
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -23,79 +25,9 @@ export default function Leaderboard() {
   const fetchLeaderboard = async () => {
     setIsRefreshing(true);
     try {
-      const response = await apiClient.get("/api/judges/leaderboard");
-      setLeaderboard(response.data.data);
+      setLeaderboard(getLeaderboard());
     } catch (error) {
       console.error("Error:", error);
-      // Mock data for demo
-      setLeaderboard([
-        {
-          id: 1,
-          team_name: "极客之光队",
-          project_title: "AI 法律助手开源框架",
-          innovation: 99.0,
-          technical: 98.5,
-          market: 97.0,
-          demo: 99.5,
-          weighted_score: 98.5,
-          poster_url: "https://equal-white-jmg5rfasyt.edgeone.app/banner2.png",
-        },
-        {
-          id: 2,
-          team_name: "灵动代码队",
-          project_title: "分布式 KV 数据库内核优化",
-          innovation: 94.0,
-          technical: 97.5,
-          market: 93.0,
-          demo: 95.0,
-          weighted_score: 95.2,
-          poster_url: "https://equal-white-jmg5rfasyt.edgeone.app/banner2.png",
-        },
-        {
-          id: 3,
-          team_name: "创新者联盟",
-          project_title: "边缘计算低功耗调度引擎",
-          innovation: 91.5,
-          technical: 94.0,
-          market: 96.0,
-          demo: 89.0,
-          weighted_score: 92.8,
-          poster_url: "https://equal-white-jmg5rfasyt.edgeone.app/banner2.png",
-        },
-        {
-          id: 4,
-          team_name: "智联未来",
-          project_title: "多模态语义搜索平台",
-          innovation: 90.0,
-          technical: 88.5,
-          market: 92.0,
-          demo: 94.5,
-          weighted_score: 91.0,
-          poster_url: "https://equal-white-jmg5rfasyt.edgeone.app/banner2.png",
-        },
-        {
-          id: 5,
-          team_name: "云端猎人",
-          project_title: "无服务器架构安全审计工具",
-          innovation: 85.0,
-          technical: 91.0,
-          market: 88.5,
-          demo: 87.0,
-          weighted_score: 88.1,
-          poster_url: "https://equal-white-jmg5rfasyt.edgeone.app/banner2.png",
-        },
-        {
-          id: 6,
-          team_name: "数据之眼",
-          project_title: "实时交互式大数据看板",
-          innovation: 82.0,
-          technical: 84.5,
-          market: 90.0,
-          demo: 89.5,
-          weighted_score: 85.85,
-          poster_url: "https://equal-white-jmg5rfasyt.edgeone.app/banner2.png",
-        },
-      ]);
     } finally {
       setIsRefreshing(false);
     }
@@ -115,12 +47,27 @@ export default function Leaderboard() {
   );
 
   const handleExportCSV = () => {
-    // TODO: Implement CSV export
-    console.log("Exporting CSV...");
+    const csvText = exportLeaderboardCsvText();
+    const blob = new Blob([`\uFEFF${csvText}`], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `评审排行榜_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
   const handleRefresh = () => {
     fetchLeaderboard();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("judgeToken");
+    navigate("/judge/login");
   };
 
   return (
@@ -164,7 +111,10 @@ export default function Leaderboard() {
             </button>
           </nav>
           <div className="flex items-center gap-4 pl-4 border-l border-primary/20">
-            <button className="bg-primary text-white text-sm font-bold h-10 px-6 rounded-lg hover:brightness-110 transition-all">
+            <button
+              onClick={handleLogout}
+              className="bg-primary text-white text-sm font-bold h-10 px-6 rounded-lg hover:brightness-110 transition-all"
+            >
               退出登录
             </button>
           </div>
@@ -225,7 +175,7 @@ export default function Leaderboard() {
                     <img
                       alt={leaderboard[1].team_name}
                       className="w-full h-full object-cover"
-                      src={`${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(leaderboard[1].poster_url)}`}
+                      src={leaderboard[1].poster_url}
                     />
                   </div>
                   <p className="text-slate-300 font-bold text-sm md:text-base">
@@ -256,7 +206,7 @@ export default function Leaderboard() {
                       <img
                         alt={leaderboard[0].team_name}
                         className="w-full h-full object-cover"
-                        src={`${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(leaderboard[0].poster_url)}`}
+                        src={leaderboard[0].poster_url}
                       />
                     </div>
                   </div>
@@ -284,7 +234,7 @@ export default function Leaderboard() {
                     <img
                       alt={leaderboard[2].team_name}
                       className="w-full h-full object-cover"
-                      src={`${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(leaderboard[2].poster_url)}`}
+                      src={leaderboard[2].poster_url}
                     />
                   </div>
                   <p className="text-slate-300 font-bold text-sm md:text-base">

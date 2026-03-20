@@ -185,32 +185,44 @@ export default function JudgeDashboard() {
   const handleExportExcel = async () => {
     setExportLoading(true);
     try {
-      const token = localStorage.getItem("judgeToken");
-      const response = await fetch(
-        `${API_BASE_URL}/api/judges/participants/export/excel`,
+      const response = await apiClient.get(
+        "/api/judges/participants/export/excel",
         {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          responseType: "blob",
+          timeout: 120000,
         },
       );
 
-      if (!response.ok) {
-        throw new Error("导出失败");
-      }
+      const disposition = response.headers["content-disposition"] || "";
+      const filenameMatch = disposition.match(
+        /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i,
+      );
+      const filename = decodeURIComponent(
+        filenameMatch?.[1] ||
+          filenameMatch?.[2] ||
+          `参赛者评审情况_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      );
 
-      const blob = await response.blob();
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `参赛者评审情况_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error("Export error:", error);
+      if (error?.response?.status === 401) {
+        alert("登录已过期，请重新登录后再导出");
+        navigate("/judge/login");
+        return;
+      }
+      if (error?.code === "ECONNABORTED") {
+        alert("导出超时，请稍后重试");
+        return;
+      }
       alert("导出失败，请重试");
     } finally {
       setExportLoading(false);

@@ -472,21 +472,6 @@ export default function RoleSelection() {
       ],
       path: "/participant/register",
     },
-    {
-      id: "judge",
-      title: "评委",
-      subtitle: "Judge",
-      description:
-        "浏览所有参赛作品、在线预览资料，并对项目进行初筛与全维度评分",
-      icon: "balance",
-      emoji: "⚖️",
-      features: [
-        "查看全部参赛项目详情",
-        "在线评阅 项目说明书 与视频材料",
-        "多维度评分并生成排行榜",
-      ],
-      path: "/judge/login",
-    },
   ];
 
   const timeline = [

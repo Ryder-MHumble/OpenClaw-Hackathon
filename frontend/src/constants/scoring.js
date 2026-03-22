@@ -1,42 +1,42 @@
 // 评分维度配置
 export const SCORING_DIMENSIONS = [
   {
+    key: "market",
+    label: "应用前景",
+    weight: "50%",
+    icon: "trending_up",
+    desc: "项目的落地能力、实用性和应用价值",
+  },
+  {
     key: "innovation",
-    label: "创新性",
-    weight: "30%",
+    label: "创新难度",
+    weight: "20%",
     icon: "lightbulb",
-    desc: "项目的创新程度和独特性",
+    desc: "项目的创新程度和实现难度",
   },
   {
     key: "technical",
-    label: "技术实现",
-    weight: "30%",
-    icon: "code",
-    desc: "技术方案的完整性和可行性",
-  },
-  {
-    key: "market",
-    label: "市场价值",
+    label: "技术实现与完成度",
     weight: "20%",
-    icon: "trending_up",
-    desc: "项目的实用性和市场潜力",
+    icon: "code",
+    desc: "技术方案的完整性、实现质量和可行性",
   },
   {
     key: "demo",
-    label: "演示效果",
-    weight: "20%",
+    label: "路演表现",
+    weight: "10%",
     icon: "play_circle",
-    desc: "演示的完整性和表现力",
+    desc: "路演表达清晰度和现场展示效果",
   },
 ];
 
 // 计算加权总分
 export const calculateWeightedScore = (scores) => {
   return (
-    scores.innovation * 0.3 +
-    scores.technical * 0.3 +
-    scores.market * 0.2 +
-    scores.demo * 0.2
+    scores.market * 0.5 +
+    scores.innovation * 0.2 +
+    scores.technical * 0.2 +
+    scores.demo * 0.1
   ).toFixed(1);
 };
 

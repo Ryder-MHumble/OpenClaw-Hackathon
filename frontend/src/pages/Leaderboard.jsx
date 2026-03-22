@@ -283,10 +283,10 @@ export default function Leaderboard() {
                   <th className="px-6 py-4">排名</th>
                   <th className="px-6 py-4">团队名称</th>
                   <th className="px-6 py-4">参赛作品</th>
-                  <th className="px-6 py-4 text-center">创新性 (30%)</th>
-                  <th className="px-6 py-4 text-center">技术难度 (30%)</th>
-                  <th className="px-6 py-4 text-center">应用前景 (20%)</th>
-                  <th className="px-6 py-4 text-center">路演表现 (20%)</th>
+                  <th className="px-6 py-4 text-center">应用前景 (50%)</th>
+                  <th className="px-6 py-4 text-center">创新难度 (20%)</th>
+                  <th className="px-6 py-4 text-center">技术实现与完成度 (20%)</th>
+                  <th className="px-6 py-4 text-center">路演表现 (10%)</th>
                   <th className="px-6 py-4 text-right">加权总分</th>
                 </tr>
               </thead>
@@ -321,13 +321,13 @@ export default function Leaderboard() {
                         {team.project_title}
                       </td>
                       <td className="px-6 py-5 text-center font-medium">
+                        {team.avg_market ?? team.market ?? "-"}
+                      </td>
+                      <td className="px-6 py-5 text-center font-medium">
                         {team.avg_innovation ?? team.innovation ?? "-"}
                       </td>
                       <td className="px-6 py-5 text-center font-medium">
                         {team.avg_technical ?? team.technical ?? "-"}
-                      </td>
-                      <td className="px-6 py-5 text-center font-medium">
-                        {team.avg_market ?? team.market ?? "-"}
                       </td>
                       <td className="px-6 py-5 text-center font-medium">
                         {team.avg_demo ?? team.demo ?? "-"}

@@ -64,7 +64,7 @@ export function ScoringForm({ scores, setScores, comments, setComments, weighted
             加权总分
           </span>
           <span className="text-xs text-slate-500">
-            创新30% + 技术30% + 市场20% + 演示20%
+            应用前景50% + 创新难度20% + 技术实现与完成度20% + 路演表现10%
           </span>
         </div>
         <div className="flex items-baseline gap-1">

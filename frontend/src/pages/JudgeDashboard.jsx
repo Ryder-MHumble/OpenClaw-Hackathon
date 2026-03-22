@@ -23,9 +23,14 @@ import {
   Trash2,
   LogOut,
 } from "lucide-react";
-import apiClient from "../config/apiClient";
 import { getTrackInfo } from "../constants/tracks";
-import { API_BASE_URL } from "../config/api";
+import {
+  deleteParticipantById,
+  exportParticipantsCsvText,
+  getJudgeDashboardStats,
+  getParticipants,
+  getTrackStats,
+} from "../data/judgeStaticStore";
 import LobsterLogo from "../components/LobsterLogo";
 
 export default function JudgeDashboard() {
@@ -91,8 +96,7 @@ export default function JudgeDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await apiClient.get("/api/judges/stats");
-      const data = res.data.data;
+      const data = getJudgeDashboardStats();
       setStats({
         total: data.total_participants || 0,
         pending: data.pending_count || 0,
@@ -107,19 +111,15 @@ export default function JudgeDashboard() {
 
   const fetchTrackStats = async () => {
     try {
-      const statusParam = filter !== "all" ? `?status=${filter}` : "";
-      const res = await apiClient.get(
-        `/api/judges/participants/stats/tracks${statusParam}`,
-      );
-      const data = res.data.data;
+      const data = getTrackStats(filter);
       const stats = {
         academic: 0,
         productivity: 0,
         life: 0,
       };
-      data.forEach((item) => {
-        if (item.track in stats) {
-          stats[item.track] = item.count;
+      Object.entries(data).forEach(([track, count]) => {
+        if (track in stats) {
+          stats[track] = count;
         }
       });
       setTrackStats(stats);
@@ -138,7 +138,7 @@ export default function JudgeDashboard() {
     }
 
     try {
-      await apiClient.delete(`/api/judges/participants/${participantId}`);
+      deleteParticipantById(participantId);
       // 重新加载数据
       await fetchParticipants();
       await fetchStats();
@@ -156,9 +156,7 @@ export default function JudgeDashboard() {
         navigate("/judge/login");
         return;
       }
-      const statusParam = filter !== "all" ? `?status=${filter}` : "";
-      const res = await apiClient.get(`/api/judges/participants${statusParam}`);
-      const data = res.data.data;
+      const data = getParticipants({ status: filter });
       const formattedData = data.map((p) => ({
         id: p.id,
         full_name: p.full_name,
@@ -185,44 +183,20 @@ export default function JudgeDashboard() {
   const handleExportExcel = async () => {
     setExportLoading(true);
     try {
-      const response = await apiClient.get(
-        "/api/judges/participants/export/excel",
-        {
-          responseType: "blob",
-          timeout: 120000,
-        },
-      );
-
-      const disposition = response.headers["content-disposition"] || "";
-      const filenameMatch = disposition.match(
-        /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i,
-      );
-      const filename = decodeURIComponent(
-        filenameMatch?.[1] ||
-          filenameMatch?.[2] ||
-          `参赛者评审情况_${new Date().toISOString().slice(0, 10)}.xlsx`,
-      );
-
-      const blob = response.data;
+      const csvText = exportParticipantsCsvText();
+      const blob = new Blob([`\uFEFF${csvText}`], {
+        type: "text/csv;charset=utf-8;",
+      });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filename;
+      a.download = `参赛者评审情况_${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error("Export error:", error);
-      if (error?.response?.status === 401) {
-        alert("登录已过期，请重新登录后再导出");
-        navigate("/judge/login");
-        return;
-      }
-      if (error?.code === "ECONNABORTED") {
-        alert("导出超时，请稍后重试");
-        return;
-      }
       alert("导出失败，请重试");
     } finally {
       setExportLoading(false);
@@ -422,7 +396,7 @@ export default function JudgeDashboard() {
             ) : (
               <>
                 <Download size={14} />
-                导出评审报告
+                导出 CSV
               </>
             )}
           </button>
@@ -552,7 +526,7 @@ export default function JudgeDashboard() {
                   <div
                     className="relative h-64 bg-cover bg-center"
                     style={{
-                      backgroundImage: `url('${API_BASE_URL}/api/proxy-image?url=${encodeURIComponent(participant.cover_image)}')`,
+                      backgroundImage: `url('${participant.cover_image}')`,
                     }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />

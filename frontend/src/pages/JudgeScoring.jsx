@@ -370,10 +370,10 @@ export default function JudgeScoring() {
   };
 
   const weightedScore = (
-    scores.innovation * 0.3 +
-    scores.technical * 0.3 +
-    scores.market * 0.2 +
-    scores.demo * 0.2
+    scores.innovation * 0.2 +
+    scores.technical * 0.2 +
+    scores.market * 0.5 +
+    scores.demo * 0.1
   ).toFixed(1);
 
   const getVideoEmbedUrl = (url) => {
@@ -416,10 +416,15 @@ export default function JudgeScoring() {
   ];
 
   const scoreDimensions = [
-    { key: "innovation", label: "创新性", weight: "30%", Icon: Lightbulb },
-    { key: "technical", label: "技术实现", weight: "30%", Icon: Code },
-    { key: "market", label: "市场价值", weight: "20%", Icon: TrendingUp },
-    { key: "demo", label: "Demo演示", weight: "20%", Icon: PlayCircle },
+    { key: "market", label: "应用前景", weight: "50%", Icon: TrendingUp },
+    { key: "innovation", label: "创新难度", weight: "20%", Icon: Lightbulb },
+    {
+      key: "technical",
+      label: "技术实现与完成度",
+      weight: "20%",
+      Icon: Code,
+    },
+    { key: "demo", label: "路演表现", weight: "10%", Icon: PlayCircle },
   ];
 
   return (
@@ -950,7 +955,7 @@ export default function JudgeScoring() {
                         最终加权总分
                       </span>
                       <p className="text-xs text-slate-500 mt-1">
-                        创新×0.3 + 技术×0.3 + 市场×0.2 + Demo×0.2
+                        应用前景×0.5 + 创新难度×0.2 + 技术实现与完成度×0.2 + 路演表现×0.1
                       </p>
                     </div>
                     <div className="text-right">

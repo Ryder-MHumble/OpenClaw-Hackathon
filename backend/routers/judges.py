@@ -30,7 +30,7 @@ async def submit_score(
     comments: str = Form(None)
 ):
     try:
-        weighted_score = (innovation * 0.3 + technical * 0.3 + market * 0.2 + demo * 0.2)
+        weighted_score = (innovation * 0.2 + technical * 0.2 + market * 0.5 + demo * 0.1)
 
         data = {
             "participant_id": participant_id,
@@ -100,10 +100,10 @@ async def ai_analyze_participant(participant_id: int):
 - 代码仓库：{p.get('repo_url') or '未提供'}{pdf_context}
 
 【评审维度说明】
-1. 创新性（0-10分）：技术或商业模式的创新程度
-2. 技术实现（0-10分）：技术选型合理性、实现难度、代码质量
-3. 市场价值（0-10分）：市场需求、商业前景、用户价值
-4. Demo 演示（0-10分）：产品完成度、演示效果、用户体验
+1. 应用前景（0-10分）：市场需求、商业前景、用户价值
+2. 创新难度（0-10分）：技术或商业模式的创新程度与实现难度
+3. 技术实现与完成度（0-10分）：技术选型合理性、实现质量、代码完整性
+4. 路演表现（0-10分）：产品完成度、演示效果、用户体验
 
 请以 JSON 格式返回分析结果，格式如下：
 {{

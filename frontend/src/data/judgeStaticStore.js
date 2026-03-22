@@ -5,9 +5,102 @@ const SCORES_KEY = "openclaw_static_scores_v1";
 const JUDGES_KEY = "openclaw_static_judges_v1";
 const JUDGE_PASSWORD = "openclaw2026";
 const FALLBACK_POSTER = "https://equal-white-jmg5rfasyt.edgeone.app/banner2.png";
+const DEFAULT_JUDGE_NAMES = [
+  "胡湘",
+  "王学辉",
+  "李永乐",
+  "张凌寒",
+  "刘震",
+  "董彬",
+  "张直政",
+  "李子玄",
+  "赵澎",
+  "何昌华",
+  "洪涛",
+  "孙蕾琪",
+  "李国平",
+  "赵欢",
+  "郭晋疆",
+  "杨天润",
+  "李想",
+  "可妈可吗",
+  "李博杰",
+  "秦和平",
+  "何纪言",
+  "梁立赫",
+];
 
 const ALLOWED_STATUSES = new Set(["pending", "reviewing", "scored", "rejected"]);
 const TRACKS = ["academic", "productivity", "life"];
+const TRACK_PROJECT_ORDER = {
+  academic: [
+    ["C PAPER"],
+    ["MatClaw"],
+    ["扣子一号"],
+    ["MedRoundTable"],
+    ["龙门星脉求索虾"],
+    ["ResearchOS"],
+    ["虾盾"],
+    ["智会虾"],
+    ["FrontierPilot"],
+    ["Traffic Lobster"],
+  ],
+  productivity: [
+    ["分裂龙虾"],
+    ["炎凌小龙虾"],
+    ["OpenClaro"],
+    ["赛博大臣"],
+    ["Clawborate"],
+    ["PatientClaw"],
+    ["MarketBrain"],
+    ["ClawFounder", "小红书运营虾"],
+    ["钱迹"],
+    ["IronClaw"],
+  ],
+  life: [
+    ["睡眠管家"],
+    ["龙虾AI管家"],
+    ["Rumor Checker"],
+    ["Mira"],
+    ["虾虾侦探"],
+    ["看图成单虾"],
+    ["心动甄选"],
+    ["PodClaw"],
+    ["Re:live", "Relive"],
+    ["虾停车"],
+  ],
+};
+
+function normalizeOrderKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^\u4e00-\u9fa5a-z0-9]/g, "");
+}
+
+function getOrderIndexByTitle(track, title) {
+  const order = TRACK_PROJECT_ORDER[track] || [];
+  const normalizedTitle = normalizeOrderKey(title);
+  for (let i = 0; i < order.length; i += 1) {
+    const aliases = order[i];
+    const matched = aliases.some((alias) =>
+      normalizedTitle.includes(normalizeOrderKey(alias)),
+    );
+    if (matched) return i;
+  }
+  return Number.POSITIVE_INFINITY;
+}
+
+function sortTrackProjectsForRoadshow(track, projects) {
+  return [...projects].sort((a, b) => {
+    const aIndex = getOrderIndexByTitle(track, a.name);
+    const bIndex = getOrderIndexByTitle(track, b.name);
+    if (aIndex !== bIndex) return aIndex - bIndex;
+    return String(a.id).localeCompare(String(b.id), "zh-Hans-CN", {
+      numeric: true,
+      sensitivity: "base",
+    });
+  });
+}
 
 function normalizeStatus(value) {
   return ALLOWED_STATUSES.has(value) ? value : "pending";
@@ -64,10 +157,56 @@ function defaultParticipants() {
 }
 
 function defaultJudges() {
-  return Array.from({ length: 15 }, (_, i) => ({
+  return DEFAULT_JUDGE_NAMES.map((name, i) => ({
     id: `judge-${i + 1}`,
-    name: `评委${i + 1}`,
+    name,
   }));
+}
+
+function normalizeJudgeName(value, idx) {
+  const trimmed = String(value || "").trim();
+  return trimmed || DEFAULT_JUDGE_NAMES[idx] || `评委${idx + 1}`;
+}
+
+function normalizeJudgesRaw(judges) {
+  if (!Array.isArray(judges) || !judges.length) {
+    return defaultJudges();
+  }
+
+  const normalized = judges.map((judge, idx) => {
+    if (typeof judge === "string") {
+      return {
+        id: `judge-${idx + 1}`,
+        name: normalizeJudgeName(judge, idx),
+      };
+    }
+
+    return {
+      id:
+        judge && typeof judge.id === "string" && judge.id.trim()
+          ? judge.id.trim()
+          : `judge-${idx + 1}`,
+      name: normalizeJudgeName(judge?.name, idx),
+    };
+  });
+
+  if (!normalized.length) {
+    return defaultJudges();
+  }
+
+  const defaultOrder = new Map(
+    DEFAULT_JUDGE_NAMES.map((name, idx) => [name, idx]),
+  );
+
+  return [...normalized].sort((a, b) => {
+    const aIdx = defaultOrder.has(a.name)
+      ? defaultOrder.get(a.name)
+      : DEFAULT_JUDGE_NAMES.length + normalized.findIndex((item) => item.id === a.id);
+    const bIdx = defaultOrder.has(b.name)
+      ? defaultOrder.get(b.name)
+      : DEFAULT_JUDGE_NAMES.length + normalized.findIndex((item) => item.id === b.id);
+    return aIdx - bIdx;
+  });
 }
 
 function parseJSON(raw, fallback) {
@@ -104,8 +243,22 @@ function setScoresRaw(scores) {
 }
 
 export function getJudges() {
-  const judges = parseJSON(localStorage.getItem(JUDGES_KEY), null);
-  if (Array.isArray(judges) && judges.length) return judges;
+  const judges = normalizeJudgesRaw(parseJSON(localStorage.getItem(JUDGES_KEY), null));
+  localStorage.setItem(JUDGES_KEY, JSON.stringify(judges));
+  return judges;
+}
+
+export function getDefaultJudgeNames() {
+  return [...DEFAULT_JUDGE_NAMES];
+}
+
+export function saveJudges(judges) {
+  const normalized = normalizeJudgesRaw(judges);
+  localStorage.setItem(JUDGES_KEY, JSON.stringify(normalized));
+  return normalized;
+}
+
+export function resetJudges() {
   const seeded = defaultJudges();
   localStorage.setItem(JUDGES_KEY, JSON.stringify(seeded));
   return seeded;
@@ -191,10 +344,10 @@ export function submitFinalScore(id, { innovation, technical, market, demo, comm
     demo: Number(demo),
     comments: comments || "",
     weighted_score:
-      Number(innovation) * 0.3 +
-      Number(technical) * 0.3 +
-      Number(market) * 0.2 +
-      Number(demo) * 0.2,
+      Number(innovation) * 0.2 +
+      Number(technical) * 0.2 +
+      Number(market) * 0.5 +
+      Number(demo) * 0.1,
     judge_id: "local-judge",
     submitted_at: new Date().toISOString(),
   };
@@ -242,10 +395,16 @@ export function getLeaderboard() {
       if (b.avg_weighted_score !== a.avg_weighted_score) {
         return b.avg_weighted_score - a.avg_weighted_score;
       }
+      if (b.avg_market !== a.avg_market) {
+        return b.avg_market - a.avg_market;
+      }
       if (b.avg_innovation !== a.avg_innovation) {
         return b.avg_innovation - a.avg_innovation;
       }
-      return b.avg_technical - a.avg_technical;
+      if (b.avg_technical !== a.avg_technical) {
+        return b.avg_technical - a.avg_technical;
+      }
+      return b.avg_demo - a.avg_demo;
     });
 }
 
@@ -271,11 +430,15 @@ export function getRoadshowProjectsGrouped() {
     grouped[track].push({
       id: participant.id,
       name: participant.project_title || `项目 ${participant.id}`,
+      teamName: participant.organization || participant.full_name || "",
+      contestantName: participant.full_name || "",
+      projectDescription: participant.project_description || "",
+      sourceParticipantId: participant.id,
     });
   });
 
   Object.keys(grouped).forEach((track) => {
-    grouped[track] = grouped[track].sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    grouped[track] = sortTrackProjectsForRoadshow(track, grouped[track]);
   });
 
   return grouped;
@@ -345,9 +508,9 @@ export function exportLeaderboardCsvText() {
     rank: index + 1,
     team_name: item.team_name,
     project_title: item.project_title,
+    market: item.avg_market,
     innovation: item.avg_innovation,
     technical: item.avg_technical,
-    market: item.avg_market,
     demo: item.avg_demo,
     weighted_score: item.avg_weighted_score,
   }));
@@ -357,9 +520,9 @@ export function exportLeaderboardCsvText() {
       "rank",
       "team_name",
       "project_title",
+      "market",
       "innovation",
       "technical",
-      "market",
       "demo",
       "weighted_score",
     ],

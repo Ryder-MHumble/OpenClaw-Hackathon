@@ -1,0 +1,51 @@
+export const FINALIST_TRACKS = [
+  {
+    trackId: "academic",
+    trackLabel: "学术龙虾",
+    projects: [
+      { groupNo: 1, title: "C PAPER" },
+      { groupNo: 2, title: "MatClaw" },
+      { groupNo: 3, title: "扣子一号" },
+      { groupNo: 4, title: "MedRoundTable" },
+      { groupNo: 5, title: "龙门星脉求索虾" },
+      { groupNo: 6, title: "ResearchOS" },
+      { groupNo: 7, title: "虾盾" },
+      { groupNo: 8, title: "智会虾" },
+      { groupNo: 9, title: "FrontierPilot" },
+      { groupNo: 10, title: "Traffic Lobster" },
+    ],
+  },
+  {
+    trackId: "productivity",
+    trackLabel: "生产力龙虾",
+    projects: [
+      { groupNo: 11, title: "分裂龙虾" },
+      { groupNo: 12, title: "炎凌小龙虾" },
+      { groupNo: 13, title: "OpenClaro" },
+      { groupNo: 14, title: "赛博大臣" },
+      { groupNo: 15, title: "Clawborate" },
+      { groupNo: 16, title: "PatientClaw" },
+      { groupNo: 17, title: "MarketBrain" },
+      { groupNo: 18, title: "ClawFounder" },
+      { groupNo: 19, title: "钱迹" },
+      { groupNo: 20, title: "IronClaw" },
+    ],
+  },
+  {
+    trackId: "life",
+    trackLabel: "生活龙虾",
+    projects: [
+      { groupNo: 21, title: "睡眠管家" },
+      { groupNo: 22, title: "🦞龙虾AI管家" },
+      { groupNo: 23, title: "Rumor Checker" },
+      { groupNo: 24, title: "Mira" },
+      { groupNo: 25, title: "虾虾侦探" },
+      { groupNo: 26, title: "看图成单虾" },
+      { groupNo: 27, title: "心动甄选" },
+      { groupNo: 28, title: "PodClaw" },
+      { groupNo: 29, title: "Re:live" },
+      { groupNo: 30, title: "虾停车" },
+    ],
+  },
+];
+

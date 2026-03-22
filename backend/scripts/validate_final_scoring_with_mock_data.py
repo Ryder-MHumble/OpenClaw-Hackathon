@@ -23,10 +23,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 
 WEIGHTS = {
-    "innovation": 0.3,
-    "technical": 0.3,
-    "market": 0.2,
-    "demo": 0.2,
+    "innovation": 0.2,
+    "technical": 0.2,
+    "market": 0.5,
+    "demo": 0.1,
 }
 
 
@@ -93,7 +93,7 @@ def export_pipeline_xlsx(
     overview_rows = [
         ["Generated At (UTC)", datetime.now(timezone.utc).isoformat()],
         ["Audit Scope", "Mock final scoring full-pipeline audit"],
-        ["Backend Formula", "innovation*0.3 + technical*0.3 + market*0.2 + demo*0.2"],
+        ["Backend Formula", "innovation*0.2 + technical*0.2 + market*0.5 + demo*0.1"],
         ["Frontend Preview Formula", "Same formula, displayed with toFixed(1)"],
         ["Raw Score Rows", len(raw_rows)],
         ["Team Count", len(report_rows)],
@@ -148,13 +148,13 @@ def export_pipeline_xlsx(
         "team_name",
         "judge_id",
         "innovation",
-        "innovation_term(30%)",
+        "innovation_term(20%)",
         "technical",
-        "technical_term(30%)",
+        "technical_term(20%)",
         "market",
-        "market_term(20%)",
+        "market_term(50%)",
         "demo",
-        "demo_term(20%)",
+        "demo_term(10%)",
         "weighted_from_terms",
         "weighted_stored_raw",
         "formula_delta",
